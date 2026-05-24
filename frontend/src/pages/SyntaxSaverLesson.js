@@ -70,6 +70,7 @@ export default function SyntaxSaverLesson({ onBack }) {
   const [quizId, setQuizId] = useState(null);
 
   const current = lessons[step];
+  const safeStep = current ?? lessons[0] ?? null;
 
   useEffect(() => boot(), []);
 
@@ -133,13 +134,18 @@ export default function SyntaxSaverLesson({ onBack }) {
         </div>
 
         {/* CONTENT */}
-        {current.type === "match" && (
-          <MatchQuestion data={current} quizId={quizId} onNext={handleNext} setFeedback={setFeedback} />
+        {!safeStep && (
+          <div style={{ padding: 20, textAlign: "center", color: "#888" }}>
+            Loading lesson…
+          </div>
         )}
-        {current.type === "reorder" && (
-          <ReorderQuestion data={current} quizId={quizId} onNext={handleNext} setFeedback={setFeedback} />
+        {safeStep?.type === "match" && Array.isArray(safeStep.options) && (
+          <MatchQuestion data={safeStep} quizId={quizId} onNext={handleNext} setFeedback={setFeedback} />
         )}
-        {current.type === "battle" && (
+        {safeStep?.type === "reorder" && Array.isArray(safeStep.parts) && (
+          <ReorderQuestion data={safeStep} quizId={quizId} onNext={handleNext} setFeedback={setFeedback} />
+        )}
+        {safeStep?.type === "battle" && (
           <CodeWormBattle onNext={handleNext} />
         )}
 

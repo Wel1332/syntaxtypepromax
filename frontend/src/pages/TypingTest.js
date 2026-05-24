@@ -22,7 +22,6 @@ import {
 } from "@mui/material";
 import KeyboardIcon from "@mui/icons-material/Keyboard";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
-import BoltIcon from "@mui/icons-material/Bolt";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -440,7 +439,7 @@ const TypingTest = () => {
             sx={{
                 display: "grid",
                 gap: 3,
-                gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+                gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
             }}
         >
             <Card
@@ -482,23 +481,6 @@ const TypingTest = () => {
                 </CardContent>
             </Card>
 
-            <Card
-                onClick={() => navigate("/fallingtypingtest2")}
-                sx={{ cursor: "pointer", transition: "transform 200ms", "&:hover": { transform: "translate(-3px,-3px)" } }}
-            >
-                <CardContent sx={{ p: 3 }}>
-                    <Stack spacing={2}>
-                        <Box sx={{ color: "primary.main" }}><BoltIcon fontSize="large" /></Box>
-                        <Typography variant="h5" sx={{ color: "text.primary" }}>Bug Smasher</Typography>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            Falling code with wrong-word traps. Type only the correct C terminology — bad words (bugs) cost lives.
-                        </Typography>
-                        <Button variant="outlined" color="primary" sx={{ alignSelf: "flex-start", mt: 1 }}>
-                            Launch →
-                        </Button>
-                    </Stack>
-                </CardContent>
-            </Card>
         </Box>
     );
 

@@ -40,7 +40,6 @@ import SchoolIcon from '@mui/icons-material/School';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import BoltIcon from '@mui/icons-material/Bolt';
 import GroupsIcon from '@mui/icons-material/Groups';
-import BugReportIcon from '@mui/icons-material/BugReport';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import Tooltip from '@mui/material/Tooltip';
@@ -78,8 +77,7 @@ const Navbar = () => {
             items: [
                 { text: 'Typing Test', link: '/typingtest', icon: <KeyboardIcon /> },
                 { text: 'Falling Code', link: '/fallingtypingtest', icon: <CloudDownloadIcon /> },
-                { text: 'Bug Smasher', link: '/fallingtypingtest2', icon: <BugReportIcon /> },
-                { text: 'Syntax Sniper', link: '/quiz', icon: <GpsFixedIcon /> },
+                { text: 'Syntax Sniper', link: '/syntax-sniper', icon: <GpsFixedIcon /> },
                 { text: 'Translation Terminal', link: '/translation-terminal', icon: <TerminalIcon /> },
                 { text: 'Galaxy Mode', link: '/galaxy-new', icon: <RocketLaunchIcon /> },
                 { text: 'Bookworm', link: '/bookworm', icon: <MenuBookIcon /> },

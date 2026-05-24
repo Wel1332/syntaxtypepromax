@@ -172,12 +172,6 @@ export default function InstructorModule() {
         Create Lesson
       </button>
       <button
-        className={`tab-button ${activeTab === 'syntaxSaver' ? 'active' : ''}`}
-        onClick={() => navigate('/syntax-saver/edit')}
-      >
-        Syntax Saver
-      </button>
-      <button
         className={`tab-button ${activeTab === 'rewards' ? 'active' : ''}`}
         onClick={() => setActiveTab('rewards')}
       >

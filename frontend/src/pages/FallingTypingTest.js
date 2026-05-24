@@ -59,6 +59,37 @@ const savePB = (id, stats) => {
 const streakMultiplier = (streak) => 1 + Math.floor(streak / 5); // 1x → 2x at 5 → 3x at 10 …
 const basePointsPerWord = 10;
 
+// Built-in default challenge so the game can be tested without picking from the list.
+const DEFAULT_CHALLENGE = {
+    challengeId: "__default__",
+    id: "__default__",
+    title: "Test Run",
+    words: [
+        "int", "float", "double", "char", "void", "return", "if", "else",
+        "for", "while", "do", "switch", "case", "break", "continue",
+        "printf", "scanf", "main", "include", "struct", "typedef",
+        "const", "static", "sizeof", "malloc", "free", "NULL",
+    ],
+    // Bug Bash pairs: the buggy form is displayed, the student must type the fix.
+    wrongWords: [
+        { buggy: "pointr", correct: "pointer" },
+        { buggy: "funtion", correct: "function" },
+        { buggy: "paramater", correct: "parameter" },
+        { buggy: "arguement", correct: "argument" },
+        { buggy: "retrun", correct: "return" },
+        { buggy: "pirntf", correct: "printf" },
+        { buggy: "scnaf", correct: "scanf" },
+        { buggy: "incldue", correct: "include" },
+        { buggy: "strcut", correct: "struct" },
+        { buggy: "voild", correct: "void" },
+        { buggy: "flaot", correct: "float" },
+        { buggy: "chra", correct: "char" },
+    ],
+    testTimer: 60,
+    speed: 1,
+    maxLives: 3,
+};
+
 const FallingTypingTest = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
@@ -88,6 +119,7 @@ const FallingTypingTest = () => {
     const [fallingWords, setFallingWords] = useState([]);
     const [popups, setPopups] = useState([]);
     const [currentInput, setCurrentInput] = useState("");
+    const [bugPhaseAlert, setBugPhaseAlert] = useState(false);
     const [activeWordId, setActiveWordId] = useState(null);
     const [flash, setFlash] = useState(null); // { color, expiresAt }
 
@@ -110,6 +142,7 @@ const FallingTypingTest = () => {
     const wordsCaughtRef = useRef(0);
     const wordsMissedRef = useRef(0);
     const wrongWordsTypedRef = useRef(0);
+    const bugPhaseStartedRef = useRef(false);
     const streakRef = useRef(0);
     const bestStreakRef = useRef(0);
     const livesRef = useRef(3);
@@ -196,7 +229,21 @@ const FallingTypingTest = () => {
 
         wordPoolsRef.current = {
             correct: (c.words || []).map((w) => String(w).trim()).filter(Boolean),
-            wrong: (c.wrongWords || []).map((w) => String(w).trim()).filter(Boolean),
+            // Normalize wrong entries to { buggy, correct }. Legacy string entries
+            // (from backend Challenge.wrongWords) fall back to buggy === correct so
+            // the spawn keeps working until teachers can author paired fixes.
+            wrong: (c.wrongWords || [])
+                .map((w) => {
+                    if (typeof w === "string") {
+                        const s = w.trim();
+                        return s ? { buggy: s, correct: s } : null;
+                    }
+                    if (w && w.buggy && w.correct) {
+                        return { buggy: String(w.buggy).trim(), correct: String(w.correct).trim() };
+                    }
+                    return null;
+                })
+                .filter(Boolean),
         };
 
         setPersonalBest(loadPB(c.challengeId || c.id));
@@ -204,6 +251,13 @@ const FallingTypingTest = () => {
         setView("playing");
         setTimeout(() => hiddenInputRef.current?.focus(), 50);
     };
+
+    // Auto-start with the built-in default challenge on first mount so the
+    // game is testable without going through the picker.
+    useEffect(() => {
+        startChallenge(DEFAULT_CHALLENGE);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const resetGameState = (dur, ml, useL) => {
         setTimeLeft(dur);
@@ -233,6 +287,8 @@ const FallingTypingTest = () => {
         wordsCaughtRef.current = 0;
         wordsMissedRef.current = 0;
         wrongWordsTypedRef.current = 0;
+        bugPhaseStartedRef.current = false;
+        setBugPhaseAlert(false);
         streakRef.current = 0;
         bestStreakRef.current = 0;
         livesRef.current = useL ? ml : Infinity;
@@ -281,16 +337,37 @@ const FallingTypingTest = () => {
     }, []);
 
     // ─── Spawn logic ──────────────────────────────────────────────────────────
+    // Bug Bash phase: bug words don't start dropping until the player has caught
+    // a few correct words. The probability ramps up after the threshold so the
+    // game feels progressively harder.
+    const BUG_PHASE_THRESHOLD = 5;
+
     const trySpawn = () => {
         const pools = wordPoolsRef.current;
         const totalPool = pools.correct.length + pools.wrong.length;
         if (totalPool === 0) return;
 
-        // Mix wrong words if available (~25% chance per spawn).
-        const useWrong = pools.wrong.length > 0 && Math.random() < 0.25;
+        const caught = wordsCaughtRef.current;
+        const bugPhaseUnlocked = caught >= BUG_PHASE_THRESHOLD;
+        const wrongChance = bugPhaseUnlocked
+            ? Math.min(0.30, 0.15 + (caught - BUG_PHASE_THRESHOLD) * 0.008)
+            : 0;
+
+        // Trigger the "Bugs incoming!" warning the first time we cross the threshold.
+        if (bugPhaseUnlocked && !bugPhaseStartedRef.current && pools.wrong.length > 0) {
+            bugPhaseStartedRef.current = true;
+            setBugPhaseAlert(true);
+            setTimeout(() => setBugPhaseAlert(false), 2500);
+        }
+
+        const useWrong = pools.wrong.length > 0 && Math.random() < wrongChance;
         const pool = useWrong ? pools.wrong : pools.correct;
         if (pool.length === 0) return;
-        const text = pool[Math.floor(Math.random() * pool.length)];
+        const entry = pool[Math.floor(Math.random() * pool.length)];
+        // For correct words: entry is a string and the student types it as shown.
+        // For bug words: entry is { buggy, correct } — display the buggy form, expect the fix.
+        const display = useWrong ? entry.buggy : entry;
+        const expected = useWrong ? entry.correct : entry;
 
         // Avoid overlap: pick an x band not occupied near the top.
         let x;
@@ -308,7 +385,8 @@ const FallingTypingTest = () => {
 
         const newWord = {
             id: wordIdCounter.current++,
-            text,
+            text: display,
+            expected,
             x,
             y: 0,
             isCorrect: !useWrong,
@@ -318,43 +396,29 @@ const FallingTypingTest = () => {
 
     // ─── Catch / penalize ─────────────────────────────────────────────────────
     const catchWord = (word) => {
-        if (word.isCorrect) {
-            // Score with streak multiplier
-            const mult = streakMultiplier(streakRef.current);
-            const points = basePointsPerWord * mult;
-            setScore((s) => s + points);
-            wordsCaughtRef.current += 1;
-            streakRef.current += 1;
-            setStreak(streakRef.current);
-            if (streakRef.current > bestStreakRef.current) {
-                bestStreakRef.current = streakRef.current;
-                setBestStreak(bestStreakRef.current);
-            }
-            // Popup
-            pushPopup({
-                x: word.x,
-                y: word.y,
-                text: `+${points}${mult > 1 ? ` ×${mult}` : ""}`,
-                color: "#7BE093",
-            });
-            triggerFlash("#7BE093");
-        } else {
-            // Wrong word typed → penalty
-            wrongWordsTypedRef.current += 1;
-            streakRef.current = 0;
-            setStreak(0);
-            if (useLivesRef.current) {
-                livesRef.current -= 1;
-                setLives(livesRef.current);
-                if (livesRef.current <= 0) {
-                    removeWord(word.id);
-                    endGame();
-                    return;
-                }
-            }
-            pushPopup({ x: word.x, y: word.y, text: "TRAP!", color: "#FF6B6B" });
-            triggerFlash("#FF6B6B");
+        // Both correct words and squashed bugs award score; bugs get a bonus
+        // because the player typed the FIX, not a copy.
+        const mult = streakMultiplier(streakRef.current);
+        const basePoints = word.isCorrect ? basePointsPerWord : basePointsPerWord * 2;
+        const points = basePoints * mult;
+        setScore((s) => s + points);
+        wordsCaughtRef.current += 1;
+        if (!word.isCorrect) wrongWordsTypedRef.current += 1; // counts as a bug squashed
+        streakRef.current += 1;
+        setStreak(streakRef.current);
+        if (streakRef.current > bestStreakRef.current) {
+            bestStreakRef.current = streakRef.current;
+            setBestStreak(bestStreakRef.current);
         }
+        pushPopup({
+            x: word.x,
+            y: word.y,
+            text: word.isCorrect
+                ? `+${points}${mult > 1 ? ` ×${mult}` : ""}`
+                : `🐛 SQUASHED +${points}`,
+            color: word.isCorrect ? "#7BE093" : "#FFC700",
+        });
+        triggerFlash(word.isCorrect ? "#7BE093" : "#FFC700");
         removeWord(word.id);
     };
 
@@ -394,13 +458,18 @@ const FallingTypingTest = () => {
             const newChar = value[value.length - 1];
             totalCharsRef.current += 1;
 
-            // Find a falling word whose text starts with the current input.
-            const match = fallingWordsRef.current.find((w) => w.text.startsWith(value));
+            // Find a falling word whose EXPECTED text (what the player needs to type)
+            // starts with the current input. For bug words, expected !== text — the
+            // player types the fix, not the buggy form on screen.
+            const match = fallingWordsRef.current.find((w) =>
+                (w.expected || w.text).startsWith(value)
+            );
             if (match) {
-                const expectedChar = match.text[value.length - 1];
+                const target = match.expected || match.text;
+                const expectedChar = target[value.length - 1];
                 if (newChar === expectedChar) correctCharsRef.current += 1;
                 setActiveWordId(match.id);
-                if (value === match.text) {
+                if (value === target) {
                     catchWord(match);
                     inputRef.current = "";
                     setCurrentInput("");
@@ -483,15 +552,14 @@ const FallingTypingTest = () => {
                 for (const w of fallingWordsRef.current) {
                     const newY = w.y + fallRate * dt;
                     if (newY > 100) {
-                        // Missed
-                        if (w.isCorrect) {
-                            wordsMissedRef.current += 1;
-                            streakRef.current = 0;
-                            if (useLivesRef.current) {
-                                livesLostThisFrame += 1;
-                            }
+                        // Missed — both correct words and bugs cost a life now.
+                        // Correct missed: the keyword got away.
+                        // Bug missed: the bug went unsquashed.
+                        wordsMissedRef.current += 1;
+                        streakRef.current = 0;
+                        if (useLivesRef.current) {
+                            livesLostThisFrame += 1;
                         }
-                        // wrong word dropped off — that's fine
                         continue;
                     }
                     updated.push({ ...w, y: newY });
@@ -585,12 +653,15 @@ const FallingTypingTest = () => {
                 }}
             >
                 {isActive
-                    ? w.text.split("").map((ch, i) => (
+                    ? (w.expected || w.text).split("").map((ch, i) => (
                           <Box
                               component="span"
                               key={i}
                               sx={{
-                                  color: currentInput[i] === ch ? "#7BE093" : currentInput[i] !== undefined ? "#FF6B6B" : baseColor,
+                                  color:
+                                      currentInput[i] === ch ? "#7BE093"
+                                          : currentInput[i] !== undefined ? "#FF6B6B"
+                                              : baseColor,
                               }}
                           >
                               {ch}
@@ -816,6 +887,43 @@ const FallingTypingTest = () => {
 
                 {/* Falling words */}
                 {fallingWords.map(renderWord)}
+
+                {/* Bug Bash phase activation alert */}
+                {bugPhaseAlert && (
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            top: "30%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            px: 4,
+                            py: 2,
+                            borderRadius: 2,
+                            bgcolor: "rgba(239,68,68,0.92)",
+                            color: "#fff",
+                            fontFamily: '"Pixelify Sans", sans-serif',
+                            fontSize: "2rem",
+                            fontWeight: 800,
+                            textAlign: "center",
+                            boxShadow: "0 0 24px rgba(239,68,68,0.6)",
+                            pointerEvents: "none",
+                            animation: "fp-bug-warn 2500ms ease-out forwards",
+                            "@keyframes fp-bug-warn": {
+                                "0%": { opacity: 0, transform: "translate(-50%, -50%) scale(0.6)" },
+                                "15%": { opacity: 1, transform: "translate(-50%, -50%) scale(1.1)" },
+                                "30%": { transform: "translate(-50%, -50%) scale(1)" },
+                                "85%": { opacity: 1 },
+                                "100%": { opacity: 0 },
+                            },
+                            zIndex: 10,
+                        }}
+                    >
+                        🐛 BUGS INCOMING!
+                        <Box sx={{ fontSize: "0.9rem", fontWeight: 400, mt: 0.5 }}>
+                            Red words are bugs — type the CORRECT syntax to squash them
+                        </Box>
+                    </Box>
+                )}
 
                 {/* Popups */}
                 {popups.map((p) => (

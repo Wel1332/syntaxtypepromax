@@ -25,7 +25,6 @@ import TeacherSetupAccountPage from './pages/TeacherSetupAccountPage';
 
 import TypingTest from './pages/TypingTest';
 import InstructorModule from './pages/InstructorModule';
-import SyntaxSaverEditor from './pages/SyntaxSaverEditor';
 import TranslationTerminal from './pages/TranslationTerminal';
 import FallingTypingTest from './pages/FallingTypingTest';
 import ChallengePage from './pages/ChallengePage';
@@ -36,7 +35,7 @@ import AllLessonsView from './pages/AllLessonsView';
 
 
 import AdminManageUsers from './components/AdminManageUsers';
-import AdvancedFallingTypingTest from './pages/AdvancedFallingTypingTest';
+import SyntaxSniper from './pages/SyntaxSniper';
 import Game from './pages/Game';
 import GalaxyMainGame from './pages/GalaxyGame/GalaxyMainGame';
 import GalaxyChallengeList from './pages/GalaxyGame/GalaxyChallengeList';
@@ -130,10 +129,10 @@ const App = () => {
           }
         />
         <Route
-          path="/syntax-saver/edit"
+          path="/syntax-sniper"
           element={
-            <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']}>
-              <SyntaxSaverEditor />
+            <ProtectedRoute allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']}>
+              <SyntaxSniper />
             </ProtectedRoute>
           }
         />
@@ -146,6 +145,10 @@ const App = () => {
           }
         />
         <Route
+          path="/bug-bash"
+          element={<Navigate to="/fallingtypingtest" replace />}
+        />
+        <Route
           path="/fallingtypingtest"
           element={
             <ProtectedRoute allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']}>
@@ -155,11 +158,7 @@ const App = () => {
         />
         <Route
           path="/fallingtypingtest2"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']}>
-              <AdvancedFallingTypingTest />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/fallingtypingtest" replace />}
         />
         <Route
           path="/galaxy"

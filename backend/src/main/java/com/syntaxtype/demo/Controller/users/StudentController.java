@@ -19,61 +19,61 @@ public class StudentController {
     private final StudentService studentService;
     private final UserService userService;
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping
     public ResponseEntity<List<StudentDTO>> getAllStudents() {
         return ResponseEntity.ok(studentService.findAll());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<Optional<StudentDTO>> getStudentByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(studentService.findByUserId(userId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/by-user")
     public ResponseEntity<Optional<StudentDTO>> getStudentByUser(@RequestBody User user) {
         return ResponseEntity.ok(studentService.findByUser(user));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/first-name/{firstName}")
     public ResponseEntity<List<StudentDTO>> getStudentsByFirstName(@PathVariable String firstName) {
         return ResponseEntity.ok(studentService.findByFirstName(firstName));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/last-name/{lastName}")
     public ResponseEntity<List<StudentDTO>> getStudentsByLastName(@PathVariable String lastName) {
         return ResponseEntity.ok(studentService.findByLastName(lastName));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/university-email/{universityEmail}")
     public ResponseEntity<List<StudentDTO>> getStudentsByUniversityEmail(@PathVariable String universityEmail) {
         return ResponseEntity.ok(studentService.findByUniversityEmail(universityEmail));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/course/{course}")
     public ResponseEntity<List<StudentDTO>> getStudentsByCourse(@PathVariable String course) {
         return ResponseEntity.ok(studentService.findByCourse(course));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/year-level/{yearLevel}")
     public ResponseEntity<List<StudentDTO>> getStudentsByYearLevel(@PathVariable String yearLevel) {
         return ResponseEntity.ok(studentService.findByYearLevel(yearLevel));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/class-name/{className}")
     public ResponseEntity<List<StudentDTO>> getStudentsByClassName(@PathVariable String className) {
         return ResponseEntity.ok(studentService.findByClassName(className));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @GetMapping("/section/{section}")
     public ResponseEntity<List<StudentDTO>> getStudentsBySection(@PathVariable String section) {
         return ResponseEntity.ok(studentService.findBySection(section));

@@ -19,6 +19,8 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import TerminalIcon from '@mui/icons-material/Terminal';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
 
@@ -29,14 +31,24 @@ const FEATURES = [
         desc: 'Sharpen speed and accuracy with code snippets and curated word lists.',
     },
     {
-        icon: <RocketLaunchIcon fontSize="large" />,
-        title: 'Galaxy Mode',
-        desc: 'Blast through space challenges — type fast or get vaporized.',
+        icon: <GpsFixedIcon fontSize="large" />,
+        title: 'Syntax Sniper',
+        desc: 'Fill-in-the-blank speedrun. Snipe the missing punctuation before the timer drops.',
+    },
+    {
+        icon: <TerminalIcon fontSize="large" />,
+        title: 'Translation Terminal',
+        desc: 'English-to-C RPG combat. Translate prompts to code to slay pixel-art enemies.',
     },
     {
         icon: <CloudDownloadIcon fontSize="large" />,
         title: 'Falling Code',
-        desc: 'Catch keywords before they hit the ground. Reflex over rhythm.',
+        desc: 'Catch keywords before they hit the ground — then survive the Bug Bash phase.',
+    },
+    {
+        icon: <RocketLaunchIcon fontSize="large" />,
+        title: 'Galaxy Mode',
+        desc: 'Blast through space challenges — type fast or get vaporized.',
     },
     {
         icon: <ExtensionIcon fontSize="large" />,
@@ -265,7 +277,7 @@ const LandingPage = () => {
                         gridTemplateColumns: {
                             xs: '1fr',
                             sm: 'repeat(2, 1fr)',
-                            md: 'repeat(4, 1fr)',
+                            md: 'repeat(3, 1fr)',
                         },
                     }}
                 >

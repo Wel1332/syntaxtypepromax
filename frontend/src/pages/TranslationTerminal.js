@@ -192,7 +192,23 @@ export default function TranslationTerminal() {
                                 {enemies.map((e, i) => (
                                     <Card key={e.id} variant="outlined" sx={{ width: 240, cursor: "pointer", "&:hover": { borderColor: e.color } }} onClick={() => startCombat(i)}>
                                         <CardContent sx={{ textAlign: "center" }}>
-                                            <Typography sx={{ fontSize: 48 }}>{e.emoji}</Typography>
+                                            {e.sprite ? (
+                                                <Box
+                                                    component="img"
+                                                    src={e.sprite}
+                                                    alt={e.name}
+                                                    sx={{
+                                                        width: 96,
+                                                        height: 96,
+                                                        imageRendering: "pixelated",
+                                                        objectFit: "contain",
+                                                        display: "block",
+                                                        mx: "auto",
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Typography sx={{ fontSize: 48 }}>{e.emoji}</Typography>
+                                            )}
                                             <Typography variant="h6" sx={{ color: e.color }}>{e.name}</Typography>
                                             <Typography variant="caption" color="text.secondary">
                                                 HP {e.hp} · ATK {e.attack}
@@ -219,7 +235,16 @@ export default function TranslationTerminal() {
                             <CardContent>
                                 {/* Enemy bar */}
                                 <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
-                                    <Typography sx={{ fontSize: 32 }}>{enemy.emoji}</Typography>
+                                    {enemy.sprite ? (
+                                        <Box
+                                            component="img"
+                                            src={enemy.sprite}
+                                            alt={enemy.name}
+                                            sx={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }}
+                                        />
+                                    ) : (
+                                        <Typography sx={{ fontSize: 32 }}>{enemy.emoji}</Typography>
+                                    )}
                                     <Box sx={{ flex: 1 }}>
                                         <Stack direction="row" justifyContent="space-between">
                                             <Typography variant="subtitle1" sx={{ color: enemy.color, fontWeight: 700 }}>{enemy.name}</Typography>

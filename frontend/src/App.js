@@ -22,6 +22,7 @@ import Dashboard from './components/Dashboard';
 import StudentDetailsForm from './pages/StudentDetailsForm';
 import TeacherDetailsForm from './pages/TeacherDetailsForm';
 import TeacherSetupAccountPage from './pages/TeacherSetupAccountPage';
+import TeacherClassDashboard from './pages/TeacherClassDashboard';
 
 import TypingTest from './pages/TypingTest';
 import InstructorModule from './pages/InstructorModule';
@@ -107,6 +108,14 @@ const App = () => {
           element={
             <ProtectedRoute allowedRoles={['TEACHER']}>
               <TeacherSetupAccountPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/class"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']}>
+              <TeacherClassDashboard />
             </ProtectedRoute>
           }
         />

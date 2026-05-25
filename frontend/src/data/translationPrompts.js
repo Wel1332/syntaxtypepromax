@@ -46,8 +46,8 @@ export default translationPrompts;
 // RPG enemies — each represents a level. HP determines how many prompts you
 // need to complete to defeat them.
 export const enemies = [
-    { id: 1, name: "Syntax Slime",     hp: 30, attack: 8,  emoji: "🟢", color: "#3ecf6a" },
-    { id: 2, name: "Bracket Beast",    hp: 50, attack: 12, emoji: "🟣", color: "#a855f7" },
-    { id: 3, name: "Compiler Wraith",  hp: 80, attack: 18, emoji: "👻", color: "#06b6d4" },
-    { id: 4, name: "Segfault Dragon",  hp: 120, attack: 25, emoji: "🐉", color: "#ef4444" },
+    { id: 1, name: "Syntax Slime",     hp: 30, attack: 8,  emoji: "🟢", sprite: "/assets/enemies/slime-idle.png", color: "#3ecf6a" },
+    { id: 2, name: "Bracket Beast",    hp: 50, attack: 12, emoji: "🟣", sprite: "/assets/enemies/bracket-beast-idle.png", color: "#a855f7" },
+    { id: 3, name: "Compiler Wraith",  hp: 80, attack: 18, emoji: "👻", sprite: "/assets/enemies/compiler-wraith-idle.png", color: "#06b6d4" },
+    { id: 4, name: "Segfault Dragon",  hp: 120, attack: 25, emoji: "🐉", sprite: "/assets/enemies/segfault-dragon-idle.png", color: "#ef4444" },
 ];

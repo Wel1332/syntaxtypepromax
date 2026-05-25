@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -29,6 +29,8 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import PendingIcon from '@mui/icons-material/Pending';
 import { getAuthToken } from '../utils/AuthUtils';
 import { getUserRole } from '../utils/JwtUtils';
+import { authFetch } from '../utils/authFetch';
+import { API_BASE } from '../utils/api';
 
 const gradientText = {
     background: 'linear-gradient(90deg, #C8456D 0%, #E78AAC 50%, #FFC700 100%)',
@@ -60,13 +62,64 @@ const Dashboard = () => {
 
     const userName = localStorage.getItem('userName') || 'Player';
 
+    const [classStats, setClassStats] = useState(null);
+
+    useEffect(() => {
+        if (userRole !== 'TEACHER' && userRole !== 'ADMIN') return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const [sRes, lRes] = await Promise.all([
+                    authFetch(`${API_BASE}/api/students`),
+                    authFetch(`${API_BASE}/api/lessons`),
+                ]);
+                const students = sRes.ok ? await sRes.json() : [];
+                const lessons = lRes.ok ? await lRes.json() : [];
+                const list = Array.isArray(students) ? students : [];
+                const lessonCount = Array.isArray(lessons) ? lessons.length : 0;
+                const userIds = list.map((s) => s.user?.userId).filter((id) => id != null);
+
+                const statEntries = await Promise.all(
+                    userIds.map(async (uid) => {
+                        try {
+                            const r = await authFetch(`${API_BASE}/api/user-statistics/user?userId=${uid}`);
+                            if (!r.ok) return null;
+                            const body = await r.json();
+                            return body && body.value ? body.value : body && body.userId != null ? body : null;
+                        } catch {
+                            return null;
+                        }
+                    })
+                );
+
+                const valid = statEntries.filter(Boolean);
+                const avg = (key) =>
+                    valid.length ? Math.round(valid.reduce((a, s) => a + (s[key] || 0), 0) / valid.length) : 0;
+
+                if (!cancelled) {
+                    setClassStats({
+                        totalStudents: list.length,
+                        totalLessons: lessonCount,
+                        averageWPM: avg('wordsPerMinute'),
+                        accuracy: avg('accuracy'),
+                    });
+                }
+            } catch {
+                // leave classStats null → cards show 0
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [userRole]);
+
     const stats = {
-        totalLessons: 12,
+        totalLessons: classStats?.totalLessons ?? 12,
         completedLessons: 8,
-        averageWPM: 45,
-        accuracy: 92,
-        totalStudents: 25,
-        totalTeachers: 5,
+        averageWPM: classStats?.averageWPM ?? 0,
+        accuracy: classStats?.accuracy ?? 0,
+        totalStudents: classStats?.totalStudents ?? 0,
+        totalTeachers: 0,
     };
 
     const recentActivities = [
@@ -86,9 +139,9 @@ const Dashboard = () => {
         }
         if (userRole === 'TEACHER') {
             return [
-                { label: 'My Students', value: stats.totalStudents, icon: <GroupsIcon />, accent: '#C8456D' },
-                { label: 'Lessons Created', value: stats.totalLessons, icon: <MenuBookIcon />, accent: '#FFC700' },
-                { label: 'Avg WPM', value: stats.averageWPM, icon: <BoltIcon />, accent: '#E78AAC' },
+                { label: 'Students', value: stats.totalStudents, icon: <GroupsIcon />, accent: '#C8456D' },
+                { label: 'Total Lessons', value: stats.totalLessons, icon: <MenuBookIcon />, accent: '#FFC700' },
+                { label: 'Class Avg WPM', value: stats.averageWPM, icon: <BoltIcon />, accent: '#E78AAC' },
                 { label: 'Class Accuracy', value: `${stats.accuracy}%`, icon: <CenterFocusStrongIcon />, accent: '#9B2E54' },
             ];
         }
@@ -113,12 +166,14 @@ const Dashboard = () => {
                 { label: 'My Profile', path: '/student-details-form', icon: <ManageAccountsIcon /> },
             ],
             TEACHER: [
+                { label: 'My Class', path: '/teacher/class', icon: <GroupsIcon /> },
                 { label: 'Instructor', path: '/instructor', icon: <SchoolIcon /> },
                 { label: 'Create Lesson', path: '/lesson', icon: <EditNoteIcon /> },
                 { label: 'Challenges', path: '/challenges', icon: <BoltIcon /> },
                 { label: 'My Profile', path: '/teacher-details-form', icon: <ManageAccountsIcon /> },
             ],
             ADMIN: [
+                { label: 'My Class', path: '/teacher/class', icon: <GroupsIcon /> },
                 { label: 'Manage Users', path: '/admin/users', icon: <GroupsIcon /> },
                 { label: 'Instructor', path: '/instructor', icon: <SchoolIcon /> },
                 { label: 'Create Lesson', path: '/lesson', icon: <EditNoteIcon /> },

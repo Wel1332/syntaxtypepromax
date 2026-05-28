@@ -1,11 +1,11 @@
 package com.syntaxtype.demo;
 
-import com.syntaxtype.demo.DTO.lessons.GalaxyChallengeDTO;
-import com.syntaxtype.demo.DTO.lessons.GalaxyChallengeDTO.QuestionDTO;
-import com.syntaxtype.demo.DTO.users.UserDTO;
-import com.syntaxtype.demo.Entity.Lessons.GalaxyChallengeClasses.QuestionTypes;
-import com.syntaxtype.demo.Service.lessons.GalaxyChallengeService;
-import com.syntaxtype.demo.Service.users.UserService;
+import com.syntaxtype.demo.features.lesson.dto.GalaxyChallengeDTO;
+import com.syntaxtype.demo.features.lesson.dto.GalaxyChallengeDTO.QuestionDTO;
+import com.syntaxtype.demo.features.user.dto.UserDTO;
+import com.syntaxtype.demo.features.lesson.entity.galaxy.QuestionTypes;
+import com.syntaxtype.demo.features.lesson.service.GalaxyChallengeService;
+import com.syntaxtype.demo.features.user.service.UserService;
 
 import java.util.List;
 

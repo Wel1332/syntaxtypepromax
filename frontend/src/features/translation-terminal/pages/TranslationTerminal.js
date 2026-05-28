@@ -1,34 +1,37 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-    Box, Card, CardContent, Stack, Typography, Button, Chip, LinearProgress, useTheme,
+    Box, Card, CardContent, Stack, Typography, Button, Chip, LinearProgress,
+    Alert, useTheme,
 } from "@mui/material";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import FlashOnIcon from "@mui/icons-material/FlashOn";
-import translationPrompts, { enemies } from "../data/translationPrompts";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import { practiceBank, testBank, enemies } from "../data/translationPrompts";
 import { tokensEqual } from "../../../shared/utils/codeCompare";
+import ModePickerCard from "../../../shared/assessment/ModePickerCard";
+import {
+    MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
+} from "../../../shared/assessment/modes";
 
 /**
  * Translation Terminal — English→C combat.
- * Each round shows an English prompt. The student types the exact C syntax
- * under a timer. tokensEqual handles whitespace/formatting tolerance.
- * Correct + in time → damage enemy. Wrong / timeout → enemy hits you.
- * Defeat the enemy to win. Recall is from memory; nothing is shown to copy.
+ *
+ * Flow: mode picker → enemy picker → combat → victory/defeat results.
+ * Mode determines (a) which prompt bank is in play, (b) attempt limit, and
+ * (c) the remarks tier on the result screen. `enemies` is shared across modes
+ * — only the prompt content differs.
  */
 
 const ROUND_SECONDS = 12;
 
-function pickPromptForEnemy(enemy, alreadyUsed) {
-    const pool = translationPrompts.filter(p => !alreadyUsed.includes(p.id));
+function pickPromptForEnemy(bank, enemy, alreadyUsed) {
+    const pool = bank.filter((p) => !alreadyUsed.includes(p.id));
     if (pool.length === 0) {
-        // Recycle if we ran out
-        return translationPrompts[Math.floor(Math.random() * translationPrompts.length)];
+        return bank[Math.floor(Math.random() * bank.length)];
     }
-    // Bias toward enemy tier
     const easier = enemy.hp < 50;
-    const filtered = pool.filter(p =>
-        easier ? p.difficulty !== "hard" : true
-    );
+    const filtered = pool.filter((p) => (easier ? p.difficulty !== "hard" : true));
     const final = filtered.length ? filtered : pool;
     return final[Math.floor(Math.random() * final.length)];
 }
@@ -37,7 +40,8 @@ export default function TranslationTerminal() {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
 
-    const [view, setView] = useState("picker"); // picker | combat | victory | defeat
+    const [view, setView] = useState("mode"); // mode | picker | combat | victory | defeat
+    const [mode, setMode] = useState(null);
     const [enemyIdx, setEnemyIdx] = useState(0);
     const [enemyHp, setEnemyHp] = useState(0);
     const [playerHp, setPlayerHp] = useState(100);
@@ -46,14 +50,26 @@ export default function TranslationTerminal() {
     const [answer, setAnswer] = useState("");
     const [time, setTime] = useState(ROUND_SECONDS);
     const [usedIds, setUsedIds] = useState([]);
-    const [flash, setFlash] = useState(null); // 'hit' | 'miss' | null
+    const [flash, setFlash] = useState(null);
     const [combo, setCombo] = useState(0);
+    const [promptsAnswered, setPromptsAnswered] = useState(0);
+    const [promptsCorrect, setPromptsCorrect] = useState(0);
+    const [recorded, setRecorded] = useState(false);
 
     const inputRef = useRef(null);
     const viewRef = useRef(view);
+    const recordedRef = useRef(recorded);
     useEffect(() => { viewRef.current = view; }, [view]);
+    useEffect(() => { recordedRef.current = recorded; }, [recorded]);
 
     const enemy = enemies[enemyIdx];
+    const bank = mode === MODE.PRACTICE ? practiceBank : testBank;
+
+    const onPickMode = (m) => {
+        if (!canStartMode(GAME.TRANSLATION, m)) return;
+        setMode(m);
+        setView("picker");
+    };
 
     const startCombat = (idx) => {
         const e = enemies[idx];
@@ -62,9 +78,11 @@ export default function TranslationTerminal() {
         setEnemyHp(e.hp);
         setPlayerHp(playerMaxHp);
         setCombo(0);
+        setPromptsAnswered(0);
+        setPromptsCorrect(0);
+        setRecorded(false);
         const used = [];
-        setUsedIds(used);
-        const p = pickPromptForEnemy(e, used);
+        const p = pickPromptForEnemy(bank, e, used);
         setUsedIds([p.id]);
         setPrompt(p);
         setAnswer("");
@@ -75,11 +93,16 @@ export default function TranslationTerminal() {
 
     const restart = () => startCombat(enemyIdx);
 
+    const backToModePicker = () => {
+        setView("mode");
+        setMode(null);
+    };
+
     // Round timer
     useEffect(() => {
         if (view !== "combat") return;
         const t = setInterval(() => {
-            setTime(prev => {
+            setTime((prev) => {
                 if (prev <= 0.1) {
                     onMiss(true);
                     return ROUND_SECONDS;
@@ -97,19 +120,19 @@ export default function TranslationTerminal() {
         setFlash("miss");
         setTimeout(() => setFlash(null), 300);
         setCombo(0);
-        setPlayerHp(prev => {
+        setPromptsAnswered((n) => n + 1);
+        setPlayerHp((prev) => {
             const next = Math.max(0, prev - dmg);
             if (next === 0) setView("defeat");
             return next;
         });
-        // Next prompt
         nextPrompt();
     };
 
     const nextPrompt = () => {
         const e = enemies[enemyIdx];
-        setUsedIds(used => {
-            const next = pickPromptForEnemy(e, used);
+        setUsedIds((used) => {
+            const next = pickPromptForEnemy(bank, e, used);
             setPrompt(next);
             return [...used, next.id];
         });
@@ -120,14 +143,15 @@ export default function TranslationTerminal() {
     const onSubmit = () => {
         if (view !== "combat" || !prompt) return;
         if (tokensEqual(prompt.solution, answer)) {
-            // Hit
             const newCombo = combo + 1;
             const multiplier = 1 + Math.floor(newCombo / 3);
             const dmg = prompt.damage * multiplier;
             setCombo(newCombo);
             setFlash("hit");
             setTimeout(() => setFlash(null), 300);
-            setEnemyHp(prev => {
+            setPromptsAnswered((n) => n + 1);
+            setPromptsCorrect((n) => n + 1);
+            setEnemyHp((prev) => {
                 const next = Math.max(0, prev - dmg);
                 if (next === 0) setView("victory");
                 return next;
@@ -145,15 +169,34 @@ export default function TranslationTerminal() {
         }
     };
 
+    // Record the run once when entering victory/defeat. Score = HP remaining +
+    // 5 × prompts cleared correctly. Percent = correct / answered for remarks.
+    useEffect(() => {
+        if ((view === "victory" || view === "defeat") && !recordedRef.current && mode) {
+            const score = playerHp + promptsCorrect * 5 + (view === "victory" ? 50 : 0);
+            const percent = promptsAnswered === 0
+                ? 0
+                : Math.round((promptsCorrect / promptsAnswered) * 100);
+            recordAttempt(GAME.TRANSLATION, mode, {
+                score, percent, outcome: view,
+                enemy: enemy?.name, promptsAnswered, promptsCorrect,
+                hpRemaining: playerHp,
+            });
+            setRecorded(true);
+        }
+    }, [view, mode, playerHp, promptsAnswered, promptsCorrect, enemy]);
+
     const enemyHpPct = enemy ? (enemyHp / enemy.hp) * 100 : 0;
     const playerHpPct = (playerHp / playerMaxHp) * 100;
+
+    const stats = mode ? getHighLow(GAME.TRANSLATION, mode) : { highest: null, lowest: null, count: 0 };
+    const accuracyPct = promptsAnswered === 0 ? 0 : Math.round((promptsCorrect / promptsAnswered) * 100);
+    const remark = getRemark(accuracyPct);
 
     return (
         <Box
             sx={{
-                minHeight: "100vh",
-                bgcolor: "background.default",
-                py: 4, px: { xs: 2, md: 4 },
+                minHeight: "100vh", bgcolor: "background.default", py: 4, px: { xs: 2, md: 4 },
                 position: "relative", overflow: "hidden",
                 "&::before": {
                     content: '""', position: "absolute",
@@ -175,22 +218,49 @@ export default function TranslationTerminal() {
                     <Typography variant="h4" sx={{ fontFamily: "'Pixelify Sans', sans-serif" }}>
                         Translation Terminal
                     </Typography>
+                    {mode && (
+                        <Chip
+                            size="small"
+                            label={MODE_META[mode].label}
+                            sx={{
+                                bgcolor: MODE_META[mode].color,
+                                color: mode === MODE.POST_TEST ? "#000" : "#fff",
+                                fontWeight: 700,
+                            }}
+                        />
+                    )}
                 </Stack>
                 <Typography variant="body2" sx={{ mb: 3, color: "text.secondary" }}>
                     Read the prompt in English. Type the C syntax from memory before the timer runs out. Defeat the enemy.
                 </Typography>
 
+                {view === "mode" && (
+                    <ModePickerCard
+                        game={GAME.TRANSLATION}
+                        onPick={onPickMode}
+                        title="Translation Terminal — pick a mode"
+                        subtitle="Practice uses a separate prompt bank from Pre-Test / Post-Test, so drilling won't leak the test answers."
+                    />
+                )}
+
                 {view === "picker" && (
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" sx={{ mb: 2 }}>Choose your enemy</Typography>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                                <Typography variant="h6">Choose your enemy</Typography>
+                                <Button size="small" onClick={backToModePicker}>Change mode</Button>
+                            </Stack>
                             <Stack
-                                direction="row"
-                                spacing={2}
+                                direction="row" spacing={2}
                                 sx={{ flexWrap: "wrap", "& > *": { mb: 2 } }}
                             >
                                 {enemies.map((e, i) => (
-                                    <Card key={e.id} variant="outlined" sx={{ width: 240, cursor: "pointer", "&:hover": { borderColor: e.color } }} onClick={() => startCombat(i)}>
+                                    <Card
+                                        key={e.id}
+                                        variant="outlined"
+                                        sx={{ width: 240, cursor: "pointer", "&:hover": { borderColor: e.color } }}
+                                        onClick={() => startCombat(i)}
+                                    >
                                         <CardContent sx={{ textAlign: "center" }}>
                                             {e.sprite ? (
                                                 <Box
@@ -198,12 +268,8 @@ export default function TranslationTerminal() {
                                                     src={e.sprite}
                                                     alt={e.name}
                                                     sx={{
-                                                        width: 96,
-                                                        height: 96,
-                                                        imageRendering: "pixelated",
-                                                        objectFit: "contain",
-                                                        display: "block",
-                                                        mx: "auto",
+                                                        width: 96, height: 96, imageRendering: "pixelated",
+                                                        objectFit: "contain", display: "block", mx: "auto",
                                                     }}
                                                 />
                                             ) : (
@@ -213,7 +279,11 @@ export default function TranslationTerminal() {
                                             <Typography variant="caption" color="text.secondary">
                                                 HP {e.hp} · ATK {e.attack}
                                             </Typography>
-                                            <Button variant="contained" sx={{ mt: 2, bgcolor: e.color, "&:hover": { bgcolor: e.color, opacity: 0.85 } }} fullWidth>
+                                            <Button
+                                                variant="contained"
+                                                sx={{ mt: 2, bgcolor: e.color, "&:hover": { bgcolor: e.color, opacity: 0.85 } }}
+                                                fullWidth
+                                            >
                                                 Engage
                                             </Button>
                                         </CardContent>
@@ -236,12 +306,8 @@ export default function TranslationTerminal() {
                                 {/* Enemy bar */}
                                 <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
                                     {enemy.sprite ? (
-                                        <Box
-                                            component="img"
-                                            src={enemy.sprite}
-                                            alt={enemy.name}
-                                            sx={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }}
-                                        />
+                                        <Box component="img" src={enemy.sprite} alt={enemy.name}
+                                            sx={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }} />
                                     ) : (
                                         <Typography sx={{ fontSize: 32 }}>{enemy.emoji}</Typography>
                                     )}
@@ -259,12 +325,8 @@ export default function TranslationTerminal() {
 
                                 {/* Player bar */}
                                 <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-                                    <Box
-                                        component="img"
-                                        src="/assets/enemies/student.png"
-                                        alt="You"
-                                        sx={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }}
-                                    />
+                                    <Box component="img" src="/assets/enemies/student.png" alt="You"
+                                        sx={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }} />
                                     <Box sx={{ flex: 1 }}>
                                         <Stack direction="row" justifyContent="space-between">
                                             <Typography variant="subtitle2">You</Typography>
@@ -298,24 +360,18 @@ export default function TranslationTerminal() {
                                 <textarea
                                     ref={inputRef}
                                     value={answer}
-                                    onChange={e => setAnswer(e.target.value)}
+                                    onChange={(e) => setAnswer(e.target.value)}
                                     onKeyDown={onKey}
                                     spellCheck={false}
                                     placeholder="Type the C code here, then press Enter…"
                                     style={{
-                                        width: "100%",
-                                        minHeight: 80,
-                                        padding: 12,
-                                        fontFamily: "'JetBrains Mono', monospace",
-                                        fontSize: 15,
-                                        lineHeight: 1.5,
-                                        border: "2px solid",
-                                        borderColor: isDark ? "#2a2a3e" : "#d0d0e0",
+                                        width: "100%", minHeight: 80, padding: 12,
+                                        fontFamily: "'JetBrains Mono', monospace", fontSize: 15, lineHeight: 1.5,
+                                        border: "2px solid", borderColor: isDark ? "#2a2a3e" : "#d0d0e0",
                                         borderRadius: 6,
                                         background: isDark ? "#0F0F1E" : "#fff",
                                         color: isDark ? "#fff" : "#1a1a2e",
-                                        outline: "none",
-                                        resize: "vertical",
+                                        outline: "none", resize: "vertical",
                                     }}
                                 />
                                 <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 2 }}>
@@ -334,27 +390,64 @@ export default function TranslationTerminal() {
                 {(view === "victory" || view === "defeat") && (
                     <Card>
                         <CardContent sx={{ textAlign: "center", py: 6 }}>
-                            <Typography variant="h4" sx={{ fontFamily: "'Pixelify Sans', sans-serif", mb: 2 }}>
+                            <Typography variant="h4" sx={{ fontFamily: "'Pixelify Sans', sans-serif", mb: 1 }}>
                                 {view === "victory" ? "Victory!" : "Defeated."}
                             </Typography>
+                            <Alert
+                                severity={remark.tone}
+                                icon={false}
+                                sx={{
+                                    mb: 3, mx: "auto", maxWidth: 480, justifyContent: "center",
+                                    "& .MuiAlert-message": { fontWeight: 700, fontSize: "1.05rem" },
+                                }}
+                            >
+                                {remark.text}
+                            </Alert>
+
                             <Typography sx={{ mb: 3 }}>
                                 {view === "victory"
-                                    ? `You defeated the ${enemy?.name}. ${enemyIdx + 1 < enemies.length ? "Take on the next foe." : "All enemies cleared."}`
-                                    : `The ${enemy?.name} got the better of you. Try again.`}
+                                    ? `You defeated the ${enemy?.name} — ${promptsCorrect}/${promptsAnswered} prompts correct.`
+                                    : `The ${enemy?.name} got the better of you. ${promptsCorrect}/${promptsAnswered} prompts cleared.`}
                             </Typography>
+
+                            {mode && stats.count > 1 && (
+                                <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 3 }}>
+                                    <Chip
+                                        icon={<EmojiEventsIcon sx={{ color: "#FFC700 !important" }} />}
+                                        label={`Highest ${stats.highest}`}
+                                        variant="outlined" color="primary"
+                                    />
+                                    <Chip label={`Lowest ${stats.lowest}`} variant="outlined" />
+                                    <Chip label={`Attempt ${stats.count}`} variant="outlined" />
+                                </Stack>
+                            )}
+
                             <Stack direction="row" spacing={2} justifyContent="center">
-                                <Button startIcon={<RestartAltIcon />} variant="outlined" onClick={restart}>
+                                <Button
+                                    startIcon={<RestartAltIcon />}
+                                    variant="outlined"
+                                    onClick={restart}
+                                    disabled={mode !== MODE.PRACTICE && !canStartMode(GAME.TRANSLATION, mode)}
+                                >
                                     Rematch
                                 </Button>
                                 {view === "victory" && enemyIdx + 1 < enemies.length && (
-                                    <Button variant="contained" color="primary" onClick={() => startCombat(enemyIdx + 1)}>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => startCombat(enemyIdx + 1)}
+                                        disabled={mode !== MODE.PRACTICE && !canStartMode(GAME.TRANSLATION, mode)}
+                                    >
                                         Next enemy →
                                     </Button>
                                 )}
-                                <Button onClick={() => setView("picker")}>
-                                    Back to picker
-                                </Button>
+                                <Button onClick={backToModePicker}>Back to mode picker</Button>
                             </Stack>
+                            {mode !== MODE.PRACTICE && !canStartMode(GAME.TRANSLATION, mode) && (
+                                <Typography variant="caption" sx={{ mt: 2, display: "block", color: "text.secondary" }}>
+                                    No attempts remaining in {MODE_META[mode]?.label}. Drill in Practice mode to keep training.
+                                </Typography>
+                            )}
                         </CardContent>
                     </Card>
                 )}

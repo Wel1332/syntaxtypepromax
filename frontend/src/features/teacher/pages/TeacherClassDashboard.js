@@ -253,7 +253,16 @@ const TeacherClassDashboard = () => {
                                 >
                                     {s.icon}
                                 </Box>
-                                <Typography variant="h3" sx={{ color: 'text.primary', fontSize: { xs: '1.75rem', md: '2.25rem' }, lineHeight: 1 }}>
+                                <Typography
+                                    variant="h3"
+                                    sx={{
+                                        color: 'text.primary',
+                                        fontSize: { xs: '1.75rem', md: '2.25rem' },
+                                        lineHeight: 1,
+                                        fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif',
+                                        fontVariantNumeric: 'tabular-nums',
+                                    }}
+                                >
                                     {s.value}
                                 </Typography>
                                 <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 700, mt: 1, display: 'block' }}>

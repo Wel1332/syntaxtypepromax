@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../../../shared/api/client";
 import { authFetch } from "../../../shared/api/authFetch";
 import { useScoreSubmission } from "../../../shared/hooks/useScoreSubmission";
+import { buildChallengeForMode } from "../data/fallingBanks";
+import ModePickerCard from "../../../shared/assessment/ModePickerCard";
+import {
+    MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
+} from "../../../shared/assessment/modes";
 import {
     Box,
     Card,
@@ -86,44 +91,18 @@ const savePB = (id, stats) => {
 const streakMultiplier = (streak) => 1 + Math.floor(streak / 5); // 1x → 2x at 5 → 3x at 10 …
 const basePointsPerWord = 10;
 
-// Built-in default challenge so the game can be tested without picking from the list.
-const DEFAULT_CHALLENGE = {
-    challengeId: "__default__",
-    id: "__default__",
-    title: "Test Run",
-    words: [
-        "int", "float", "double", "char", "void", "return", "if", "else",
-        "for", "while", "do", "switch", "case", "break", "continue",
-        "printf", "scanf", "main", "include", "struct", "typedef",
-        "const", "static", "sizeof", "malloc", "free", "NULL",
-    ],
-    // Bug Bash pairs: the buggy form is displayed, the student must type the fix.
-    wrongWords: [
-        { buggy: "pointr", correct: "pointer" },
-        { buggy: "funtion", correct: "function" },
-        { buggy: "paramater", correct: "parameter" },
-        { buggy: "arguement", correct: "argument" },
-        { buggy: "retrun", correct: "return" },
-        { buggy: "pirntf", correct: "printf" },
-        { buggy: "scnaf", correct: "scanf" },
-        { buggy: "incldue", correct: "include" },
-        { buggy: "strcut", correct: "struct" },
-        { buggy: "voild", correct: "void" },
-        { buggy: "flaot", correct: "float" },
-        { buggy: "chra", correct: "char" },
-    ],
-    testTimer: 60,
-    speed: 1,
-    maxLives: 3,
-};
+// Default challenge is now produced from the mode-aware fallingBanks module —
+// PRACTICE pulls the easier/wider pool, PRE_TEST and POST_TEST share the
+// sealed test bank with tighter timer and fewer lives.
 
 const FallingTypingTest = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
     const navigate = useNavigate();
 
-    // Top-level view states: 'picker' | 'playing' | 'gameover'
-    const [view, setView] = useState("picker");
+    // Top-level view states: 'mode' | 'picker' | 'playing' | 'gameover'
+    const [view, setView] = useState("mode");
+    const [mode, setMode] = useState(null);
     const [availableChallenges, setAvailableChallenges] = useState([]);
     const [challengesLoading, setChallengesLoading] = useState(true);
     const [challengesError, setChallengesError] = useState(null);
@@ -188,10 +167,13 @@ const FallingTypingTest = () => {
     const gameDurationRef = useRef(60);
     const selectedChallengeRef = useRef(null);
 
+    const modeRef = useRef(null);
+
     // Keep refs in sync with state used by endGame.
     useEffect(() => { scoreRef.current = score; }, [score]);
     useEffect(() => { gameDurationRef.current = gameDuration; }, [gameDuration]);
     useEffect(() => { selectedChallengeRef.current = selectedChallenge; }, [selectedChallenge]);
+    useEffect(() => { modeRef.current = mode; }, [mode]);
 
     const { submitScore, isSubmitting, submitMessage, submitSuccess, snackbarOpen, setSnackbarOpen } =
         useScoreSubmission();
@@ -288,12 +270,25 @@ const FallingTypingTest = () => {
         setTimeout(() => hiddenInputRef.current?.focus(), 50);
     };
 
-    // Auto-start with the built-in default challenge on first mount so the
-    // game is testable without going through the picker.
-    useEffect(() => {
-        startChallenge(DEFAULT_CHALLENGE);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // Mode picker → either drop into the default mode-built challenge (the
+    // common case) or open the challenge browser so the student can pick from
+    // teacher-authored challenges in the chosen mode.
+    const onPickMode = (m) => {
+        if (!canStartMode(GAME.FALLING, m)) return;
+        setMode(m);
+        startChallenge(buildChallengeForMode(m));
+    };
+    const openChallengePicker = (m) => {
+        if (!canStartMode(GAME.FALLING, m)) return;
+        setMode(m);
+        setView("picker");
+    };
+    const backToModePicker = () => {
+        if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        setView("mode");
+        setMode(null);
+        setSelectedChallenge(null);
+    };
 
     const resetGameState = (dur, ml, useL) => {
         setTimeLeft(dur);
@@ -373,6 +368,24 @@ const FallingTypingTest = () => {
                 stats.isNewBest = true;
             }
         }
+
+        // Record this attempt against the active assessment mode so the
+        // ModePickerCard and result screen can show attempts-left and hi/lo.
+        const m = modeRef.current;
+        if (m) {
+            const percent = stats.wordsCaught + wordsMissedRef.current === 0
+                ? 0
+                : Math.round((stats.wordsCaught / (stats.wordsCaught + wordsMissedRef.current)) * 100);
+            recordAttempt(GAME.FALLING, m, {
+                score: stats.score,
+                percent,
+                wpm: stats.wpm,
+                accuracy: stats.accuracy,
+                linesCaught: stats.linesCaught,
+                challengeKey,
+            });
+        }
+
         setFinalStats(stats);
         setShowSubmitButton(true);
         setView("gameover");
@@ -813,9 +826,12 @@ const FallingTypingTest = () => {
 
             <Card>
                 <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                    <Typography variant="h6" sx={{ color: "text.primary", mb: 2 }}>
-                        Choose a challenge
-                    </Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                        <Typography variant="h6" sx={{ color: "text.primary" }}>
+                            Choose a challenge
+                        </Typography>
+                        <Button size="small" onClick={backToModePicker}>Change mode</Button>
+                    </Stack>
                     {challengesLoading && (
                         <Box sx={{ textAlign: "center", py: 4 }}>
                             <CircularProgress color="primary" />
@@ -1198,6 +1214,42 @@ const FallingTypingTest = () => {
                             )}
                         </Typography>
 
+                        {(() => {
+                            if (!mode) return null;
+                            const totalSeen = finalStats.wordsCaught + finalStats.wordsMissed;
+                            const percent = totalSeen === 0 ? 0 : Math.round((finalStats.wordsCaught / totalSeen) * 100);
+                            const remark = getRemark(percent);
+                            return (
+                                <Alert
+                                    severity={remark.tone}
+                                    icon={false}
+                                    sx={{
+                                        mx: "auto", maxWidth: 520,
+                                        "& .MuiAlert-message": { fontWeight: 700, fontSize: "1.05rem" },
+                                    }}
+                                >
+                                    {remark.text}
+                                </Alert>
+                            );
+                        })()}
+
+                        {(() => {
+                            if (!mode) return null;
+                            const hl = getHighLow(GAME.FALLING, mode);
+                            if (hl.count < 2) return null;
+                            return (
+                                <Stack direction="row" spacing={1.5} justifyContent="center" sx={{ flexWrap: "wrap" }}>
+                                    <Chip
+                                        icon={<EmojiEventsIcon sx={{ color: "#FFC700 !important" }} />}
+                                        label={`Highest ${hl.highest}`}
+                                        variant="outlined" color="primary"
+                                    />
+                                    <Chip label={`Lowest ${hl.lowest}`} variant="outlined" />
+                                    <Chip label={`Attempt ${hl.count}`} variant="outlined" />
+                                </Stack>
+                            );
+                        })()}
+
                         {finalStats.isNewBest && (
                             <Chip
                                 icon={<EmojiEventsIcon sx={{ color: "#FFC700 !important" }} />}
@@ -1255,13 +1307,26 @@ const FallingTypingTest = () => {
                                     {isSubmitting ? "Submitting…" : "Submit to Leaderboard"}
                                 </Button>
                             )}
-                            <Button variant="outlined" color="primary" size="large" startIcon={<RestartAltIcon />} onClick={handleRestart}>
+                            <Button
+                                variant="outlined" color="primary" size="large"
+                                startIcon={<RestartAltIcon />}
+                                onClick={handleRestart}
+                                disabled={mode && mode !== MODE.PRACTICE && !canStartMode(GAME.FALLING, mode)}
+                            >
                                 Play Again
                             </Button>
                             <Button variant="text" color="primary" size="large" onClick={handleBackToPicker}>
                                 Pick another
                             </Button>
+                            <Button variant="text" color="primary" size="large" onClick={backToModePicker}>
+                                Change mode
+                            </Button>
                         </Stack>
+                        {mode && mode !== MODE.PRACTICE && !canStartMode(GAME.FALLING, mode) && (
+                            <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                                No attempts remaining in {MODE_META[mode]?.label}. Switch to Practice to keep training.
+                            </Typography>
+                        )}
                     </Stack>
                 </CardContent>
             </Card>
@@ -1312,14 +1377,35 @@ const FallingTypingTest = () => {
 
             <Box sx={{ position: "relative", zIndex: 1, maxWidth: 1100, mx: "auto", px: { xs: 2, md: 4 }, py: { xs: 4, md: 6 } }}>
                 <Stack spacing={1} sx={{ mb: 4 }}>
-                    <Typography variant="overline" sx={{ color: "primary.main", fontWeight: 700, letterSpacing: 2 }}>
-                        Falling Code
-                    </Typography>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Typography variant="overline" sx={{ color: "primary.main", fontWeight: 700, letterSpacing: 2 }}>
+                            Falling Code
+                        </Typography>
+                        {mode && (
+                            <Chip
+                                size="small"
+                                label={MODE_META[mode].label}
+                                sx={{
+                                    bgcolor: MODE_META[mode].color,
+                                    color: mode === MODE.POST_TEST ? "#000" : "#fff",
+                                    fontWeight: 700,
+                                }}
+                            />
+                        )}
+                    </Stack>
                     <Typography variant="h3" sx={{ color: "text.primary" }}>
                         Catch the <Box component="span" sx={gradientText}>keywords</Box>
                     </Typography>
                 </Stack>
 
+                {view === "mode" && (
+                    <ModePickerCard
+                        game={GAME.FALLING}
+                        onPick={onPickMode}
+                        title="Falling Code — pick a mode"
+                        subtitle="Practice has a wider, easier word pool and 5 lives. Pre/Post-Test use a sealed bank, 3 lives, and a tighter timer."
+                    />
+                )}
                 {view === "picker" && renderPicker()}
                 {view === "playing" && selectedChallenge && renderPlaying()}
                 {view === "gameover" && renderGameOver()}

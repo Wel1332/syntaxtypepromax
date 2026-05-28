@@ -1,0 +1,313 @@
+{
+  "$schema": "demo data — drop into the teacher dashboard until the backend's modeType column lands.",
+  "section": "BSCS-2A — Intro to C Programming",
+  "instructor": "Prof. M. Reyes",
+  "exportedAt": "2026-05-28T08:00:00Z",
+  "students": [
+    {
+      "id": "S001",
+      "name": "Alyssa Mendoza",
+      "email": "amendoza@school.edu",
+      "performance": {
+        "sniper": {
+          "preTest": { "score": 410, "percent": 50, "completedAt": "2026-05-12T03:10:00Z" },
+          "practice": [
+            { "score": 470, "percent": 67, "completedAt": "2026-05-14T05:20:00Z" },
+            { "score": 540, "percent": 83, "completedAt": "2026-05-16T05:40:00Z" },
+            { "score": 610, "percent": 83, "completedAt": "2026-05-19T06:15:00Z" },
+            { "score": 685, "percent": 100, "completedAt": "2026-05-22T06:30:00Z" }
+          ],
+          "postTest": [
+            { "score": 720, "percent": 100, "completedAt": "2026-05-25T07:00:00Z" }
+          ]
+        },
+        "translation": {
+          "preTest": { "score": 95, "percent": 40, "outcome": "defeat", "completedAt": "2026-05-12T03:25:00Z" },
+          "practice": [
+            { "score": 140, "percent": 58, "outcome": "victory", "completedAt": "2026-05-14T05:55:00Z" },
+            { "score": 170, "percent": 70, "outcome": "victory", "completedAt": "2026-05-17T06:10:00Z" },
+            { "score": 205, "percent": 82, "outcome": "victory", "completedAt": "2026-05-21T06:45:00Z" }
+          ],
+          "postTest": [
+            { "score": 245, "percent": 92, "outcome": "victory", "completedAt": "2026-05-26T07:15:00Z" }
+          ]
+        },
+        "falling": {
+          "preTest": { "score": 280, "percent": 55, "wpm": 22, "accuracy": 78, "completedAt": "2026-05-12T03:40:00Z" },
+          "practice": [
+            { "score": 360, "percent": 70, "wpm": 28, "accuracy": 84, "completedAt": "2026-05-15T05:25:00Z" },
+            { "score": 430, "percent": 78, "wpm": 32, "accuracy": 87, "completedAt": "2026-05-18T06:00:00Z" },
+            { "score": 510, "percent": 85, "wpm": 36, "accuracy": 90, "completedAt": "2026-05-22T06:50:00Z" }
+          ],
+          "postTest": [
+            { "score": 590, "percent": 92, "wpm": 41, "accuracy": 93, "completedAt": "2026-05-27T07:20:00Z" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S002",
+      "name": "Brian Castillo",
+      "email": "bcastillo@school.edu",
+      "performance": {
+        "sniper": {
+          "preTest": { "score": 280, "percent": 33, "completedAt": "2026-05-12T03:12:00Z" },
+          "practice": [
+            { "score": 320, "percent": 50, "completedAt": "2026-05-13T04:05:00Z" },
+            { "score": 360, "percent": 50, "completedAt": "2026-05-15T05:40:00Z" },
+            { "score": 380, "percent": 67, "completedAt": "2026-05-18T06:10:00Z" }
+          ],
+          "postTest": [
+            { "score": 405, "percent": 67, "completedAt": "2026-05-25T07:05:00Z" }
+          ]
+        },
+        "translation": {
+          "preTest": { "score": 60, "percent": 28, "outcome": "defeat", "completedAt": "2026-05-12T03:28:00Z" },
+          "practice": [
+            { "score": 90, "percent": 42, "outcome": "defeat", "completedAt": "2026-05-14T05:50:00Z" },
+            { "score": 120, "percent": 55, "outcome": "victory", "completedAt": "2026-05-18T06:20:00Z" }
+          ],
+          "postTest": [
+            { "score": 155, "percent": 64, "outcome": "victory", "completedAt": "2026-05-26T07:18:00Z" }
+          ]
+        },
+        "falling": {
+          "preTest": { "score": 195, "percent": 42, "wpm": 18, "accuracy": 72, "completedAt": "2026-05-12T03:45:00Z" },
+          "practice": [
+            { "score": 240, "percent": 55, "wpm": 21, "accuracy": 76, "completedAt": "2026-05-16T05:30:00Z" },
+            { "score": 290, "percent": 60, "wpm": 23, "accuracy": 79, "completedAt": "2026-05-20T06:00:00Z" }
+          ],
+          "postTest": [
+            { "score": 335, "percent": 70, "wpm": 26, "accuracy": 83, "completedAt": "2026-05-27T07:25:00Z" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S003",
+      "name": "Camille Reyes",
+      "email": "creyes@school.edu",
+      "performance": {
+        "sniper": {
+          "preTest": { "score": 540, "percent": 67, "completedAt": "2026-05-12T03:08:00Z" },
+          "practice": [
+            { "score": 600, "percent": 83, "completedAt": "2026-05-14T05:15:00Z" },
+            { "score": 680, "percent": 100, "completedAt": "2026-05-17T05:50:00Z" }
+          ],
+          "postTest": [
+            { "score": 780, "percent": 100, "completedAt": "2026-05-24T06:55:00Z" }
+          ]
+        },
+        "translation": {
+          "preTest": { "score": 130, "percent": 64, "outcome": "victory", "completedAt": "2026-05-12T03:30:00Z" },
+          "practice": [
+            { "score": 180, "percent": 78, "outcome": "victory", "completedAt": "2026-05-15T05:35:00Z" },
+            { "score": 220, "percent": 86, "outcome": "victory", "completedAt": "2026-05-19T06:05:00Z" }
+          ],
+          "postTest": [
+            { "score": 265, "percent": 95, "outcome": "victory", "completedAt": "2026-05-26T07:10:00Z" }
+          ]
+        },
+        "falling": {
+          "preTest": { "score": 360, "percent": 65, "wpm": 28, "accuracy": 85, "completedAt": "2026-05-12T03:50:00Z" },
+          "practice": [
+            { "score": 440, "percent": 78, "wpm": 33, "accuracy": 88, "completedAt": "2026-05-16T05:45:00Z" },
+            { "score": 525, "percent": 86, "wpm": 37, "accuracy": 91, "completedAt": "2026-05-21T06:35:00Z" }
+          ],
+          "postTest": [
+            { "score": 640, "percent": 95, "wpm": 44, "accuracy": 95, "completedAt": "2026-05-27T07:30:00Z" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S004",
+      "name": "Daniel Lim",
+      "email": "dlim@school.edu",
+      "performance": {
+        "sniper": {
+          "preTest": { "score": 220, "percent": 17, "completedAt": "2026-05-12T03:14:00Z" },
+          "practice": [
+            { "score": 260, "percent": 33, "completedAt": "2026-05-13T04:10:00Z" },
+            { "score": 290, "percent": 50, "completedAt": "2026-05-16T05:25:00Z" },
+            { "score": 325, "percent": 50, "completedAt": "2026-05-19T06:05:00Z" },
+            { "score": 360, "percent": 67, "completedAt": "2026-05-22T06:40:00Z" }
+          ],
+          "postTest": [
+            { "score": 340, "percent": 50, "completedAt": "2026-05-25T07:10:00Z" },
+            { "score": 395, "percent": 67, "completedAt": "2026-05-26T07:35:00Z" }
+          ]
+        },
+        "translation": {
+          "preTest": { "score": 45, "percent": 22, "outcome": "defeat", "completedAt": "2026-05-12T03:32:00Z" },
+          "practice": [
+            { "score": 75, "percent": 33, "outcome": "defeat", "completedAt": "2026-05-15T05:45:00Z" },
+            { "score": 95, "percent": 41, "outcome": "defeat", "completedAt": "2026-05-18T06:25:00Z" },
+            { "score": 115, "percent": 50, "outcome": "victory", "completedAt": "2026-05-22T07:00:00Z" }
+          ],
+          "postTest": [
+            { "score": 130, "percent": 54, "outcome": "victory", "completedAt": "2026-05-26T07:22:00Z" }
+          ]
+        },
+        "falling": {
+          "preTest": { "score": 150, "percent": 35, "wpm": 14, "accuracy": 68, "completedAt": "2026-05-12T03:55:00Z" },
+          "practice": [
+            { "score": 190, "percent": 45, "wpm": 17, "accuracy": 72, "completedAt": "2026-05-16T05:50:00Z" },
+            { "score": 220, "percent": 52, "wpm": 19, "accuracy": 75, "completedAt": "2026-05-20T06:15:00Z" },
+            { "score": 255, "percent": 58, "wpm": 21, "accuracy": 78, "completedAt": "2026-05-23T06:55:00Z" }
+          ],
+          "postTest": [
+            { "score": 270, "percent": 60, "wpm": 22, "accuracy": 79, "completedAt": "2026-05-27T07:40:00Z" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S005",
+      "name": "Erika Tan",
+      "email": "etan@school.edu",
+      "performance": {
+        "sniper": {
+          "preTest": { "score": 320, "percent": 50, "completedAt": "2026-05-12T03:16:00Z" },
+          "practice": [
+            { "score": 400, "percent": 67, "completedAt": "2026-05-14T05:30:00Z" },
+            { "score": 450, "percent": 67, "completedAt": "2026-05-17T06:00:00Z" },
+            { "score": 510, "percent": 83, "completedAt": "2026-05-20T06:25:00Z" }
+          ],
+          "postTest": [
+            { "score": 575, "percent": 83, "completedAt": "2026-05-25T07:15:00Z" }
+          ]
+        },
+        "translation": {
+          "preTest": { "score": 80, "percent": 36, "outcome": "defeat", "completedAt": "2026-05-12T03:35:00Z" },
+          "practice": [
+            { "score": 125, "percent": 55, "outcome": "victory", "completedAt": "2026-05-15T05:40:00Z" },
+            { "score": 165, "percent": 70, "outcome": "victory", "completedAt": "2026-05-19T06:30:00Z" }
+          ],
+          "postTest": [
+            { "score": 195, "percent": 78, "outcome": "victory", "completedAt": "2026-05-26T07:28:00Z" }
+          ]
+        },
+        "falling": {
+          "preTest": { "score": 250, "percent": 50, "wpm": 21, "accuracy": 76, "completedAt": "2026-05-12T04:00:00Z" },
+          "practice": [
+            { "score": 310, "percent": 62, "wpm": 24, "accuracy": 80, "completedAt": "2026-05-16T06:00:00Z" },
+            { "score": 380, "percent": 72, "wpm": 28, "accuracy": 84, "completedAt": "2026-05-21T06:55:00Z" }
+          ],
+          "postTest": [
+            { "score": 460, "percent": 82, "wpm": 33, "accuracy": 88, "completedAt": "2026-05-27T07:45:00Z" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S006",
+      "name": "Francis Aquino",
+      "email": "faquino@school.edu",
+      "performance": {
+        "sniper": {
+          "preTest": { "score": 180, "percent": 17, "completedAt": "2026-05-12T03:18:00Z" },
+          "practice": [
+            { "score": 210, "percent": 33, "completedAt": "2026-05-13T04:20:00Z" }
+          ],
+          "postTest": [
+            { "score": 230, "percent": 33, "completedAt": "2026-05-25T07:20:00Z" }
+          ]
+        },
+        "translation": {
+          "preTest": { "score": 30, "percent": 14, "outcome": "defeat", "completedAt": "2026-05-12T03:38:00Z" },
+          "practice": [
+            { "score": 55, "percent": 25, "outcome": "defeat", "completedAt": "2026-05-15T05:50:00Z" }
+          ],
+          "postTest": [
+            { "score": 70, "percent": 30, "outcome": "defeat", "completedAt": "2026-05-26T07:32:00Z" }
+          ]
+        },
+        "falling": {
+          "preTest": { "score": 120, "percent": 28, "wpm": 12, "accuracy": 64, "completedAt": "2026-05-12T04:05:00Z" },
+          "practice": [
+            { "score": 145, "percent": 35, "wpm": 14, "accuracy": 68, "completedAt": "2026-05-17T06:05:00Z" }
+          ],
+          "postTest": [
+            { "score": 165, "percent": 40, "wpm": 16, "accuracy": 71, "completedAt": "2026-05-27T07:48:00Z" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S007",
+      "name": "Grace Villanueva",
+      "email": "gvillanueva@school.edu",
+      "performance": {
+        "sniper": {
+          "preTest": { "score": 600, "percent": 83, "completedAt": "2026-05-12T03:05:00Z" },
+          "practice": [
+            { "score": 660, "percent": 100, "completedAt": "2026-05-14T05:10:00Z" }
+          ],
+          "postTest": [
+            { "score": 805, "percent": 100, "completedAt": "2026-05-24T06:45:00Z" }
+          ]
+        },
+        "translation": {
+          "preTest": { "score": 165, "percent": 78, "outcome": "victory", "completedAt": "2026-05-12T03:24:00Z" },
+          "practice": [
+            { "score": 210, "percent": 86, "outcome": "victory", "completedAt": "2026-05-15T05:30:00Z" }
+          ],
+          "postTest": [
+            { "score": 280, "percent": 100, "outcome": "victory", "completedAt": "2026-05-26T07:05:00Z" }
+          ]
+        },
+        "falling": {
+          "preTest": { "score": 420, "percent": 70, "wpm": 32, "accuracy": 88, "completedAt": "2026-05-12T03:48:00Z" },
+          "practice": [
+            { "score": 510, "percent": 82, "wpm": 38, "accuracy": 91, "completedAt": "2026-05-16T05:40:00Z" }
+          ],
+          "postTest": [
+            { "score": 695, "percent": 96, "wpm": 46, "accuracy": 96, "completedAt": "2026-05-27T07:15:00Z" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S008",
+      "name": "Hector Domingo",
+      "email": "hdomingo@school.edu",
+      "performance": {
+        "sniper": {
+          "preTest": { "score": 380, "percent": 50, "completedAt": "2026-05-12T03:20:00Z" },
+          "practice": [
+            { "score": 410, "percent": 50, "completedAt": "2026-05-15T05:20:00Z" },
+            { "score": 435, "percent": 67, "completedAt": "2026-05-18T06:30:00Z" },
+            { "score": 460, "percent": 67, "completedAt": "2026-05-21T07:00:00Z" },
+            { "score": 480, "percent": 67, "completedAt": "2026-05-24T07:10:00Z" }
+          ],
+          "postTest": [
+            { "score": 470, "percent": 67, "completedAt": "2026-05-25T07:25:00Z" },
+            { "score": 495, "percent": 67, "completedAt": "2026-05-26T07:50:00Z" }
+          ]
+        },
+        "translation": {
+          "preTest": { "score": 100, "percent": 45, "outcome": "defeat", "completedAt": "2026-05-12T03:42:00Z" },
+          "practice": [
+            { "score": 130, "percent": 55, "outcome": "victory", "completedAt": "2026-05-17T06:15:00Z" },
+            { "score": 150, "percent": 60, "outcome": "victory", "completedAt": "2026-05-21T07:10:00Z" }
+          ],
+          "postTest": [
+            { "score": 170, "percent": 65, "outcome": "victory", "completedAt": "2026-05-26T07:38:00Z" }
+          ]
+        },
+        "falling": {
+          "preTest": { "score": 230, "percent": 48, "wpm": 20, "accuracy": 74, "completedAt": "2026-05-12T04:10:00Z" },
+          "practice": [
+            { "score": 280, "percent": 55, "wpm": 23, "accuracy": 78, "completedAt": "2026-05-16T06:10:00Z" },
+            { "score": 330, "percent": 65, "wpm": 26, "accuracy": 82, "completedAt": "2026-05-20T06:30:00Z" },
+            { "score": 365, "percent": 68, "wpm": 28, "accuracy": 84, "completedAt": "2026-05-23T07:05:00Z" }
+          ],
+          "postTest": [
+            { "score": 395, "percent": 72, "wpm": 30, "accuracy": 86, "completedAt": "2026-05-27T07:52:00Z" }
+          ]
+        }
+      }
+    }
+  ]
+}

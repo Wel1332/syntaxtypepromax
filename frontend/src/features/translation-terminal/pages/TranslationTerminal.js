@@ -13,6 +13,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { practiceBank, testBank, enemies } from "../data/translationPrompts";
 import { tokensEqual } from "../../../shared/utils/codeCompare";
 import ModePickerCard from "../../../shared/assessment/ModePickerCard";
+import { useScoreSubmission } from "../../../shared/hooks/useScoreSubmission";
 import {
     MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
 } from "../../../shared/assessment/modes";
@@ -61,6 +62,8 @@ export default function TranslationTerminal() {
     const [promptsAnswered, setPromptsAnswered] = useState(0);
     const [promptsCorrect, setPromptsCorrect] = useState(0);
     const [recorded, setRecorded] = useState(false);
+
+    const { submitScore } = useScoreSubmission();
 
     const inputRef = useRef(null);
     const viewRef = useRef(view);
@@ -206,6 +209,7 @@ export default function TranslationTerminal() {
                 enemy: enemy?.name, promptsAnswered, promptsCorrect,
                 hpRemaining: playerHp,
             });
+            submitScore("GALAXY", { score, accuracy: percent, wpm: 0 });
             setRecorded(true);
         }
     }, [view, mode, playerHp, promptsAnswered, promptsCorrect, enemy]);

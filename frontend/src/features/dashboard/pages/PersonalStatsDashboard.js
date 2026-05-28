@@ -67,13 +67,16 @@ const PersonalStatsDashboard = () => {
             })
             .catch(() => {});
 
-        // Fetch scores
-        authFetch(`${API_BASE}/api/scores`)
+        // Fetch only this user's scores (newest first)
+        authFetch(`${API_BASE}/api/scores/me`)
             .then(res => res.json())
             .then(data => {
                 const arr = Array.isArray(data) ? data : [];
-                setScores(arr.filter(s => s.challengeType === 'normal'));
-                setFallingScores(arr.filter(s => s.challengeType === 'falling'));
+                // Normalise legacy types ('normal', 'falling') and new enum names
+                const isTyping  = t => t === 'normal'  || t === 'TYPING_TESTS';
+                const isFalling = t => t === 'falling' || t === 'FALLING_WORDS';
+                setScores(arr.filter(s => isTyping(s.challengeType)));
+                setFallingScores(arr.filter(s => isFalling(s.challengeType)));
                 setStatsLoading(false);
             })
             .catch(err => {

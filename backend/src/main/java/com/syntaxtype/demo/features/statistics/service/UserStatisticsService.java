@@ -201,11 +201,13 @@ public class UserStatisticsService {
     }
 
     /**
-     * Increments lifetimeXp for the given user by {@code amount}.
-     * Creates a UserStatistics record with zero defaults if one does not exist yet.
+     * Records one session: updates all cumulative UserStatistics fields and adds XP.
+     * Best WPM is tracked as a high-water mark; accuracy is a running average;
+     * totalTestsTaken and totalTimeSpent accumulate across every session.
+     * Creates the UserStatistics row if it does not exist yet.
      */
-    public void addLifetimeXp(User user, int amount) {
-        if (user == null || amount <= 0) return;
+    public void recordSession(User user, int wpm, int accuracy, int timeSpentSeconds, int rawScore) {
+        if (user == null) return;
         Optional<UserStatistics> statsOpt = userStatisticsRepository.findByUser(user);
         UserStatistics stats;
         if (statsOpt.isPresent()) {
@@ -213,19 +215,41 @@ public class UserStatisticsService {
         } else {
             stats = UserStatistics.builder()
                     .user(user)
-                    .wordsPerMinute(0)
-                    .accuracy(0)
-                    .totalWordsTyped(0)
-                    .totalTimeSpent(0)
-                    .totalErrors(0)
-                    .totalTestsTaken(0)
-                    .fastestClearTime(0)
-                    .lifetimeXp(0L)
+                    .wordsPerMinute(0).accuracy(0)
+                    .totalWordsTyped(0).totalTimeSpent(0)
+                    .totalErrors(0).totalTestsTaken(0)
+                    .fastestClearTime(0).lifetimeXp(0L)
                     .build();
         }
-        long current = stats.getLifetimeXp() != null ? stats.getLifetimeXp() : 0L;
-        stats.setLifetimeXp(current + amount);
+
+        int prevTests = stats.getTotalTestsTaken() != null ? stats.getTotalTestsTaken() : 0;
+        int newTests  = prevTests + 1;
+
+        // Best (highest) WPM seen across all sessions
+        int prevWpm = stats.getWordsPerMinute() != null ? stats.getWordsPerMinute() : 0;
+        stats.setWordsPerMinute(Math.max(prevWpm, wpm));
+
+        // Rolling average accuracy
+        int prevAcc = stats.getAccuracy() != null ? stats.getAccuracy() : 0;
+        stats.setAccuracy(prevTests == 0 ? accuracy : ((prevAcc * prevTests) + accuracy) / newTests);
+
+        // Cumulative time (seconds)
+        int prevTime = stats.getTotalTimeSpent() != null ? stats.getTotalTimeSpent() : 0;
+        stats.setTotalTimeSpent(prevTime + timeSpentSeconds);
+
+        // Session count
+        stats.setTotalTestsTaken(newTests);
+
+        // Lifetime XP
+        long prevXp = stats.getLifetimeXp() != null ? stats.getLifetimeXp() : 0L;
+        stats.setLifetimeXp(prevXp + Math.max(0, rawScore));
+
         userStatisticsRepository.save(stats);
+    }
+
+    /** Convenience wrapper kept for call-sites that only need XP. */
+    public void addLifetimeXp(User user, int amount) {
+        recordSession(user, 0, 0, 0, amount);
     }
 
     public UserStatisticsDTO getStatisticsForUserAndLesson(Long userId, Long lessonId) {

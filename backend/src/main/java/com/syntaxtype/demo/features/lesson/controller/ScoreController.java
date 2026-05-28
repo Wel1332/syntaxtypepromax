@@ -5,6 +5,7 @@ import com.syntaxtype.demo.features.statistics.dto.LeaderboardUpdateResult;
 import com.syntaxtype.demo.features.statistics.dto.ScoreSubmissionRequest;
 import com.syntaxtype.demo.core.enums.Category;
 import com.syntaxtype.demo.core.security.CustomUserDetails;
+import com.syntaxtype.demo.features.lesson.repository.ScoreRepository;
 import com.syntaxtype.demo.features.lesson.service.ScoreService;
 import com.syntaxtype.demo.features.statistics.service.AchievementEvaluatorService;
 import com.syntaxtype.demo.features.statistics.service.LeaderboardService;
@@ -25,15 +26,18 @@ import java.util.Optional;
 public class ScoreController {
 
     private final ScoreService scoreService;
+    private final ScoreRepository scoreRepository;
     private final LeaderboardService leaderboardService;
     private final UserStatisticsService userStatisticsService;
     private final AchievementEvaluatorService achievementEvaluatorService;
 
     public ScoreController(ScoreService scoreService,
+                           ScoreRepository scoreRepository,
                            LeaderboardService leaderboardService,
                            UserStatisticsService userStatisticsService,
                            AchievementEvaluatorService achievementEvaluatorService) {
         this.scoreService = scoreService;
+        this.scoreRepository = scoreRepository;
         this.leaderboardService = leaderboardService;
         this.userStatisticsService = userStatisticsService;
         this.achievementEvaluatorService = achievementEvaluatorService;
@@ -65,6 +69,13 @@ public class ScoreController {
     @GetMapping
     public List<Score> getAllScores() {
         return scoreService.getAllScores();
+    }
+
+    /** Returns only the authenticated user's scores, newest first. */
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
+    public ResponseEntity<List<Score>> getMyScores(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(scoreRepository.findByUserOrderBySubmittedAtDesc(userDetails.getUser()));
     }
 
     // Get all falling scores
@@ -119,8 +130,10 @@ public class ScoreController {
         LeaderboardUpdateResult result = leaderboardService.updateLeaderboardIfBetter(
                 username, categoryEnum, wpm, accuracy, rawScore);
 
-        // Accumulate lifetime XP (every session, regardless of whether it's a new best)
-        userStatisticsService.addLifetimeXp(userDetails.getUser(), rawScore);
+        // Update all cumulative stats (WPM, accuracy, tests taken, time, XP) in one write
+        userStatisticsService.recordSession(
+                userDetails.getUser(), wpm, accuracy,
+                Optional.ofNullable(request.getTimeSpent()).orElse(0), rawScore);
 
         // Auto-award any newly triggered achievement badges
         List<String> badges = achievementEvaluatorService.evaluateAndAward(

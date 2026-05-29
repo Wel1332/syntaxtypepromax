@@ -50,7 +50,14 @@ public class LeaderboardController {
     public ResponseEntity<List<LeaderboardEntry>> getGameLeaderboard(
             @PathVariable Category category,
             @RequestParam(defaultValue = "combined") String metric) {
-        
+
+        // Score-based (non-typing) games submit no WPM, so WPM/combined ranking
+        // would tie everyone at zero — rank them by their raw game score instead,
+        // regardless of the requested metric.
+        if (!leaderboardService.isTypingCategory(category)) {
+            return ResponseEntity.ok(leaderboardService.getTop10ByScore(category));
+        }
+
         return switch (metric.toLowerCase()) {
             case "wpm" -> ResponseEntity.ok(leaderboardService.getTop10ByWpm(category));
             case "accuracy" -> ResponseEntity.ok(leaderboardService.getTop10ByAccuracy(category));

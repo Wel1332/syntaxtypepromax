@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,6 +58,17 @@ class LeaderboardServiceTest {
         lb.setUser(user);
         lb.setWordsPerMinute(wpm);
         lb.setAccuracy(accuracy);
+        lb.setCategory(category);
+        return lb;
+    }
+
+    private Leaderboard createScoreLeaderboard(User user, Integer score, Integer accuracy, Category category) {
+        Leaderboard lb = new Leaderboard();
+        lb.setLeaderboardId(user.getUserId());
+        lb.setUser(user);
+        lb.setWordsPerMinute(0); // score-based games submit no WPM
+        lb.setAccuracy(accuracy);
+        lb.setScore(score);
         lb.setCategory(category);
         return lb;
     }
@@ -159,10 +172,12 @@ class LeaderboardServiceTest {
         @Test
         @DisplayName("Should handle multiple ties at different positions")
         void shouldHandleMultipleTiesAtDifferentPositions() {
+            // One clear leader, then two players tied below — a tie that is not
+            // at rank 1, exercising sequential-rank-then-tie behaviour.
             List<Leaderboard> entries = Arrays.asList(
                     createLeaderboard(testUser1, 100, 95, Category.TYPING_TESTS),
-                    createLeaderboard(testUser2, 100, 90, Category.TYPING_TESTS), // Tie at rank 1
-                    createLeaderboard(testUser3, 90, 95, Category.TYPING_TESTS)
+                    createLeaderboard(testUser2, 100, 90, Category.TYPING_TESTS), // ties with user3 at rank 2
+                    createLeaderboard(testUser3, 90, 90, Category.TYPING_TESTS)   // ties with user2 at rank 2
             );
 
             when(leaderboardRepository.findTop10ByCategoryOrderByAccuracyDesc(Category.TYPING_TESTS))
@@ -171,13 +186,13 @@ class LeaderboardServiceTest {
             List<LeaderboardEntry> result = leaderboardService.getTop10ByAccuracy(Category.TYPING_TESTS);
 
             assertThat(result).hasSize(3);
-            // Sorted by accuracy: user1 (95), user3 (90), user2 (90)
+            // Sorted by accuracy desc (stable): user1 (95), user2 (90), user3 (90)
             assertThat(result.get(0).getUsername()).isEqualTo("player1");
             assertThat(result.get(0).getRank()).isEqualTo(1);
-            assertThat(result.get(1).getUsername()).isEqualTo("player3");
+            assertThat(result.get(1).getUsername()).isEqualTo("player2");
             assertThat(result.get(1).getRank()).isEqualTo(2);
-            assertThat(result.get(2).getUsername()).isEqualTo("player2");
-            assertThat(result.get(2).getRank()).isEqualTo(2); // Tie with previous
+            assertThat(result.get(2).getUsername()).isEqualTo("player3");
+            assertThat(result.get(2).getRank()).isEqualTo(2); // tie with previous
         }
     }
 
@@ -300,6 +315,72 @@ class LeaderboardServiceTest {
             assertThat(result.get(0).getScore()).isEqualTo(147.0);
             assertThat(result.get(1).getUsername()).isEqualTo("player2");
             assertThat(result.get(1).getScore()).isEqualTo(108.0);
+        }
+    }
+
+    @Nested
+    @DisplayName("Top 10 by Score Tests (non-typing games)")
+    class Top10ByScoreTests {
+
+        @Test
+        @DisplayName("Should rank score-based games by raw score, not combined score")
+        void shouldRankByRawScore() {
+            // Non-typing games submit wpm=0, so combined score would tie everyone
+            // at 0; ranking must fall back to the raw game score.
+            List<Leaderboard> entries = Arrays.asList(
+                    createScoreLeaderboard(testUser1, 300, 80, Category.SYNTAX_SAVER),
+                    createScoreLeaderboard(testUser2, 500, 60, Category.SYNTAX_SAVER),
+                    createScoreLeaderboard(testUser3, 100, 95, Category.SYNTAX_SAVER)
+            );
+
+            when(leaderboardRepository.findTopNByCategoryOrderByScoreDesc(
+                    eq(Category.SYNTAX_SAVER), any(Pageable.class))).thenReturn(entries);
+
+            List<LeaderboardEntry> result = leaderboardService.getTop10ByScore(Category.SYNTAX_SAVER);
+
+            assertThat(result).hasSize(3);
+            assertThat(result.get(0).getUsername()).isEqualTo("player2");
+            assertThat(result.get(0).getScore()).isEqualTo(500.0); // raw score, not 0
+            assertThat(result.get(0).getRank()).isEqualTo(1);
+            assertThat(result.get(1).getUsername()).isEqualTo("player1");
+            assertThat(result.get(1).getScore()).isEqualTo(300.0);
+            assertThat(result.get(2).getUsername()).isEqualTo("player3");
+            assertThat(result.get(2).getScore()).isEqualTo(100.0);
+        }
+
+        @Test
+        @DisplayName("Should assign the same rank to tied raw scores")
+        void shouldTieOnRawScore() {
+            List<Leaderboard> entries = Arrays.asList(
+                    createScoreLeaderboard(testUser1, 200, 80, Category.GALAXY),
+                    createScoreLeaderboard(testUser2, 200, 70, Category.GALAXY),
+                    createScoreLeaderboard(testUser3, 50, 90, Category.GALAXY)
+            );
+
+            when(leaderboardRepository.findTopNByCategoryOrderByScoreDesc(
+                    eq(Category.GALAXY), any(Pageable.class))).thenReturn(entries);
+
+            List<LeaderboardEntry> result = leaderboardService.getTop10ByScore(Category.GALAXY);
+
+            assertThat(result).hasSize(3);
+            assertThat(result.get(0).getRank()).isEqualTo(1);
+            assertThat(result.get(1).getRank()).isEqualTo(1); // tie
+            assertThat(result.get(2).getRank()).isEqualTo(3); // sequential, not 2
+        }
+    }
+
+    @Nested
+    @DisplayName("Typing Category Classification Tests")
+    class TypingCategoryTests {
+
+        @Test
+        @DisplayName("Should classify only TYPING_TESTS and FALLING_WORDS as typing games")
+        void shouldClassifyTypingCategories() {
+            assertThat(leaderboardService.isTypingCategory(Category.TYPING_TESTS)).isTrue();
+            assertThat(leaderboardService.isTypingCategory(Category.FALLING_WORDS)).isTrue();
+            assertThat(leaderboardService.isTypingCategory(Category.SYNTAX_SAVER)).isFalse();
+            assertThat(leaderboardService.isTypingCategory(Category.CODE_CHALLENGES)).isFalse();
+            assertThat(leaderboardService.isTypingCategory(Category.GALAXY)).isFalse();
         }
     }
 

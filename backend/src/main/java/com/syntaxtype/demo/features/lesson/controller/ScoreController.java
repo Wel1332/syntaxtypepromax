@@ -146,9 +146,16 @@ public class ScoreController {
         score.setUser(user);
         scoreService.saveScore(score);
 
-        // Update leaderboard if better
-        LeaderboardUpdateResult result = leaderboardService.updateLeaderboardIfBetter(
-                username, categoryEnum, wpm, accuracy, rawScore);
+        // Update leaderboard if better — but never for PRACTICE plays. Practice
+        // is unlimited training and is documented as keeping no leaderboard
+        // record, so letting it set a best would let students grind the board
+        // and undercut the Pre-Test/Post-Test assessment. XP, cumulative stats,
+        // and badges below are still awarded for practice.
+        boolean isPractice = "PRACTICE".equalsIgnoreCase(request.getModeType());
+        LeaderboardUpdateResult result = isPractice
+                ? LeaderboardUpdateResult.builder().success(true).isNewBest(false).rank(null).build()
+                : leaderboardService.updateLeaderboardIfBetter(
+                        username, categoryEnum, wpm, accuracy, rawScore);
 
         // Update all cumulative stats (WPM, accuracy, tests taken, time, XP, errors) in one write
         userStatisticsService.recordSession(

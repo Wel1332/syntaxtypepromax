@@ -47,6 +47,10 @@ const GAME_OPTIONS = [
   { value: "CHALLENGES", label: "Challenges" },
 ];
 
+// Only typing games have a meaningful WPM / combined score. Every other game is
+// ranked by raw score, so the WPM/Accuracy/Combined metric toggle doesn't apply.
+const TYPING_GAMES = new Set(["TYPING_TESTS", "FALLING_WORDS"]);
+
 const LeaderboardPage = () => {
   const navigate = useNavigate();
   
@@ -200,6 +204,10 @@ const LeaderboardPage = () => {
 
   const isLoggedIn = !!getAuthToken();
 
+  // Score-based games are ranked by raw score; the metric toggle is hidden and
+  // the score column is labelled "Score" rather than "Combined Score".
+  const isScoreBasedGame = !!selectedGame && !TYPING_GAMES.has(selectedGame);
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", pt: 2 }}>
       <Container maxWidth="lg">
@@ -247,33 +255,42 @@ const LeaderboardPage = () => {
           Leaderboard
         </Typography>
 
-        {/* Metric Toggle Section */}
+        {/* Metric Toggle Section — only for typing/global views. Score-based
+            games are always ranked by raw score, so the toggle is hidden. */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" sx={{ mb: 1, color: "text.secondary" }}>
-            Sort by: <strong>{selectedMetric.toUpperCase()}</strong>
-          </Typography>
-          <Tooltip
-            title="Formula: WPM × (Accuracy/100) × 1.5 if accuracy > 95%"
-            arrow
-          >
-            <ToggleButtonGroup
-              value={selectedMetric}
-              exclusive
-              onChange={handleMetricChange}
-              aria-label="metric selection"
-              sx={{
-                "& .MuiToggleButton-root": {
-                  textTransform: "none",
-                  px: 3,
-                  py: 1,
-                },
-              }}
-            >
-              <ToggleButton value="wpm">WPM</ToggleButton>
-              <ToggleButton value="accuracy">Accuracy</ToggleButton>
-              <ToggleButton value="combined">Combined</ToggleButton>
-            </ToggleButtonGroup>
-          </Tooltip>
+          {isScoreBasedGame ? (
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Sort by: <strong>SCORE</strong>
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ mb: 1, color: "text.secondary" }}>
+                Sort by: <strong>{selectedMetric.toUpperCase()}</strong>
+              </Typography>
+              <Tooltip
+                title="Formula: WPM × (Accuracy/100) × 1.5 if accuracy > 95%"
+                arrow
+              >
+                <ToggleButtonGroup
+                  value={selectedMetric}
+                  exclusive
+                  onChange={handleMetricChange}
+                  aria-label="metric selection"
+                  sx={{
+                    "& .MuiToggleButton-root": {
+                      textTransform: "none",
+                      px: 3,
+                      py: 1,
+                    },
+                  }}
+                >
+                  <ToggleButton value="wpm">WPM</ToggleButton>
+                  <ToggleButton value="accuracy">Accuracy</ToggleButton>
+                  <ToggleButton value="combined">Combined</ToggleButton>
+                </ToggleButtonGroup>
+              </Tooltip>
+            </>
+          )}
         </Box>
 
         {/* Filters Row */}
@@ -373,7 +390,7 @@ const LeaderboardPage = () => {
                   <TableCell sx={{ color: "white", fontWeight: "bold" }}>Username</TableCell>
                   <TableCell sx={{ color: "white", fontWeight: "bold" }} align="right">WPM</TableCell>
                   <TableCell sx={{ color: "white", fontWeight: "bold" }} align="right">Accuracy</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }} align="right">Combined Score</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }} align="right">{isScoreBasedGame ? "Score" : "Combined Score"}</TableCell>
                   <TableCell sx={{ color: "white", fontWeight: "bold" }}>Game</TableCell>
                   <TableCell sx={{ color: "white", fontWeight: "bold" }}>Date</TableCell>
                 </TableRow>
@@ -427,7 +444,9 @@ const LeaderboardPage = () => {
                         {entry.accuracy != null ? `${entry.accuracy.toFixed(1)}%` : "—"}
                       </TableCell>
                       <TableCell align="right">
-                        {entry.combinedScore != null ? entry.combinedScore.toFixed(2) : "—"}
+                        {entry.score != null
+                          ? (isScoreBasedGame ? Math.round(entry.score) : entry.score.toFixed(2))
+                          : "—"}
                       </TableCell>
                       <TableCell>{entry.gameName || "—"}</TableCell>
                       <TableCell>{formatDate(entry.dateAchieved)}</TableCell>

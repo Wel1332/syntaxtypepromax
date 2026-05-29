@@ -271,6 +271,15 @@ const PersonalStatsDashboard = () => {
 
     const totalSessions = typingStats.count + fallingStats.count + sniperStats.count + translationSt.count + galaxyStats.count;
 
+    // Average WPM across typing-based sessions only — the other game modes submit
+    // wpm 0, so including them would drag the average toward zero.
+    const wpmSessions = [...typingScores, ...fallingScores]
+        .map(s => s.wpm ?? 0)
+        .filter(w => w > 0);
+    const avgWpm = wpmSessions.length
+        ? Math.round(wpmSessions.reduce((a, b) => a + b, 0) / wpmSessions.length)
+        : 0;
+
     const GAME_DEFS = [
         { label: 'Typing Test',          stats: typingStats,    accent: '#C8456D', path: '/typingtest' },
         { label: 'Falling Code',         stats: fallingStats,   accent: '#A78BFA', path: '/fallingtypingtest' },
@@ -323,7 +332,8 @@ const PersonalStatsDashboard = () => {
                                 <Stack spacing={0.5} sx={{ minWidth: 160 }}>
                                     {[
                                         { label: 'Total Sessions', value: totalStats.totalTestsTaken ?? totalSessions },
-                                        { label: 'Avg WPM',        value: Math.round(totalStats.wordsPerMinute ?? 0) },
+                                        { label: 'Best WPM',       value: Math.round(totalStats.wordsPerMinute ?? 0) },
+                                        { label: 'Avg WPM',        value: avgWpm },
                                         { label: 'Avg Accuracy',   value: `${Math.round(totalStats.accuracy ?? 0)}%` },
                                         { label: 'Total Errors',   value: totalStats.totalErrors ?? 0 },
                                     ].map(({ label, value }) => (

@@ -157,6 +157,29 @@ public class LeaderboardService {
     }
 
     /**
+     * Whether a category is a typing game (ranked by WPM / combined score).
+     * Everything else is a score-based game ranked by raw game score.
+     */
+    public boolean isTypingCategory(Category category) {
+        return category == Category.TYPING_TESTS || category == Category.FALLING_WORDS;
+    }
+
+    /**
+     * Get top 10 leaderboard entries for a score-based (non-typing) category,
+     * ordered by raw game score descending. Used for games like Syntax Sniper,
+     * Translation Terminal, and Galaxy that submit no WPM, so combined/WPM
+     * ranking would tie everyone at zero.
+     *
+     * @param category The game category
+     * @return List of top 10 LeaderboardEntry ranked by raw score
+     */
+    public List<LeaderboardEntry> getTop10ByScore(Category category) {
+        List<Leaderboard> entries =
+                leaderboardRepository.findTopNByCategoryOrderByScoreDesc(category, PageRequest.of(0, 10));
+        return assignRanksWithTies(entries, "score");
+    }
+
+    /**
      * Get top 10 leaderboard entries for a category ordered by combined score.
      * Combined score = wpm * (accuracy / 100.0) with 1.5x multiplier if accuracy > 95
      *
@@ -266,6 +289,7 @@ public class LeaderboardService {
                     int comparison = switch (metricType.toLowerCase()) {
                         case "wpm" -> b.getWordsPerMinute().compareTo(a.getWordsPerMinute());
                         case "accuracy" -> b.getAccuracy().compareTo(a.getAccuracy());
+                        case "score" -> Integer.compare(rawScore(b), rawScore(a));
                         case "combined" -> LeaderboardEntry.calculateCombinedScore(b.getWordsPerMinute(), b.getAccuracy())
                                 .compareTo(LeaderboardEntry.calculateCombinedScore(a.getWordsPerMinute(), a.getAccuracy()));
                         default -> 0;
@@ -286,12 +310,13 @@ public class LeaderboardService {
                 boolean isSameScore = switch (metricType.toLowerCase()) {
                     case "wpm" -> lb.getWordsPerMinute().equals(prev.getWordsPerMinute());
                     case "accuracy" -> lb.getAccuracy().equals(prev.getAccuracy());
+                    case "score" -> rawScore(lb) == rawScore(prev);
                     case "combined" -> Objects.equals(
                             LeaderboardEntry.calculateCombinedScore(lb.getWordsPerMinute(), lb.getAccuracy()),
                             LeaderboardEntry.calculateCombinedScore(prev.getWordsPerMinute(), prev.getAccuracy()));
                     default -> false;
                 };
-                
+
                 if (isSameScore) {
                     // Same rank value as previous
                 } else {
@@ -299,11 +324,21 @@ public class LeaderboardService {
                     currentRank = i + 1;
                 }
             }
-            
-            result.add(LeaderboardEntry.fromLeaderboard(lb, currentRank, LocalDateTime.now()));
+
+            // Score-based games display the raw game score; typing games display
+            // the WPM×accuracy combined score.
+            LeaderboardEntry entry = "score".equals(metricType.toLowerCase())
+                    ? LeaderboardEntry.fromLeaderboardScore(lb, currentRank, LocalDateTime.now())
+                    : LeaderboardEntry.fromLeaderboard(lb, currentRank, LocalDateTime.now());
+            result.add(entry);
         }
-        
+
         return result;
+    }
+
+    /** Null-safe raw game score for an entry (0 when unset). */
+    private static int rawScore(Leaderboard lb) {
+        return lb.getScore() != null ? lb.getScore() : 0;
     }
 
     public void deleteById(Long id) {
@@ -361,7 +396,7 @@ public class LeaderboardService {
             }
 
             // Check if this is a typing game
-            boolean isTypingGame = category == Category.TYPING_TESTS || category == Category.FALLING_WORDS;
+            boolean isTypingGame = isTypingCategory(category);
 
             // Find existing leaderboard entry for user + category
             Optional<Leaderboard> existingEntry = leaderboardRepository.findByUserAndCategory(user, category);

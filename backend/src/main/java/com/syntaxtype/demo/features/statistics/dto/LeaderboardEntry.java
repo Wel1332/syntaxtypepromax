@@ -49,6 +49,28 @@ public class LeaderboardEntry {
     }
 
     /**
+     * Creates a LeaderboardEntry for a score-based (non-typing) game.
+     * These games have no WPM, so the displayed/ranked score is the raw game
+     * score from the entity rather than the WPM×accuracy combined score.
+     *
+     * @param lb The Leaderboard entity
+     * @param rank The rank position
+     * @param dateAchieved The date the score was achieved
+     * @return A new LeaderboardEntry whose score is the raw game score
+     */
+    public static LeaderboardEntry fromLeaderboardScore(Leaderboard lb, Integer rank, LocalDateTime dateAchieved) {
+        return LeaderboardEntry.builder()
+                .rank(rank)
+                .username(lb.getUser().getUsername())
+                .score(lb.getScore() != null ? (double) lb.getScore() : 0.0)
+                .wpm(lb.getWordsPerMinute())
+                .accuracy(lb.getAccuracy())
+                .gameName(lb.getCategory().name())
+                .dateAchieved(dateAchieved)
+                .build();
+    }
+
+    /**
      * Calculates combined score from WPM and accuracy.
      *
      * Combined score formula:

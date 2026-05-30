@@ -4,14 +4,32 @@ import {
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
-    MODE, MODE_META, attemptsRemaining, getAttempts, getHighLow, resetMode, isModeLocked,
+    MODE, MODE_META, attemptsRemaining, getAttempts, getHighLow, isModeLocked, resetMode,
 } from "./modes";
+import { getAuthToken } from "../auth/AuthUtils";
+import { getUserRole } from "../auth/JwtUtils";
+
+// Only staff can clear a student's Pre/Post attempts. Students who burned
+// through their tries have to ask a teacher to reset them — there is no
+// self-serve reset path.
+const canResetAttempts = () => {
+    try {
+        const token = getAuthToken();
+        if (!token) return false;
+        const role = getUserRole(token);
+        return role === "TEACHER" || role === "ADMIN";
+    } catch {
+        return false;
+    }
+};
 
 // Reusable Pre-Test / Practice / Post-Test picker. `game` is a stable string
 // key (see GAME constants in modes.js). `onPick(mode)` fires once the student
 // commits to a mode that still has attempts left.
 export default function ModePickerCard({ game, onPick, title = "Choose your mode", subtitle }) {
+    const showReset = canResetAttempts();
     return (
         <Card>
             <CardContent>
@@ -133,20 +151,30 @@ export default function ModePickerCard({ game, onPick, title = "Choose your mode
                                         {locked ? "Pre-Test required" : blocked ? "Limit reached" : "Start"}
                                     </Button>
 
-                                    {attempts > 0 && meta.attemptLimit !== Infinity && (
-                                        <Tooltip title="Demo / dev only — clears this mode's attempt counter and history">
+                                    {showReset && attempts > 0 && meta.attemptLimit !== Infinity && (
+                                        <Tooltip title="Teacher override — clears this mode's attempt counter and stored scores for the student signed in on this device.">
                                             <Button
                                                 size="small"
                                                 fullWidth
-                                                sx={{ mt: 0.5, fontSize: 11, color: "text.secondary" }}
+                                                startIcon={<RestartAltIcon sx={{ fontSize: 14 }} />}
+                                                sx={{
+                                                    mt: 0.75,
+                                                    fontSize: 11,
+                                                    color: "text.secondary",
+                                                    border: "1px dashed",
+                                                    borderColor: "divider",
+                                                }}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    const ok = window.confirm(
+                                                        `Reset ${meta.label} attempts for the student signed in on this device? This wipes the attempt counter and stored scores for this mode.`
+                                                    );
+                                                    if (!ok) return;
                                                     resetMode(game, m);
-                                                    // Force a re-render via location.reload — cheap, fine for a demo button.
                                                     window.location.reload();
                                                 }}
                                             >
-                                                Reset attempts
+                                                Reset attempts (teacher)
                                             </Button>
                                         </Tooltip>
                                     )}

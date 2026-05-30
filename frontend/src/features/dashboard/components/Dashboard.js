@@ -258,14 +258,12 @@ const Dashboard = () => {
             STUDENT: [
                 { label: 'Leaderboard', path: '/leaderboard', icon: <EmojiEventsIcon /> },
                 { label: 'My Stats & Badges', path: '/my-stats', icon: <TrendingUpIcon /> },
-                { label: 'My Profile', path: '/student-details-form', icon: <ManageAccountsIcon /> },
             ],
             TEACHER: [
                 { label: 'My Class', path: '/teacher/class', icon: <GroupsIcon /> },
                 { label: 'Instructor', path: '/instructor', icon: <SchoolIcon /> },
                 { label: 'Create Lesson', path: '/lesson', icon: <EditNoteIcon /> },
                 { label: 'Challenges', path: '/challenges', icon: <BoltIcon /> },
-                { label: 'My Profile', path: '/teacher-details-form', icon: <ManageAccountsIcon /> },
             ],
             ADMIN: [
                 { label: 'My Class', path: '/teacher/class', icon: <GroupsIcon /> },

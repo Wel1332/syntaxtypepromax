@@ -47,6 +47,7 @@ import Quiz from '../features/quiz/pages/QuizMenu';
 import CrosswordGame from '../features/quiz/pages/CrosswordGame';
 import LeaderboardPage from '../features/leaderboard/pages/LeaderboardPage';
 import PersonalStatsDashboard from '../features/dashboard/pages/PersonalStatsDashboard';
+import ProfilePage from '../features/profile/pages/ProfilePage';
 
 import NotFoundRedirect from './layout/NotFoundRedirect';
 
@@ -83,6 +84,7 @@ export const routes = [
   // Protected — any logged-in role
   { path: '/dashboard',              element: <Dashboard />,              kind: 'protected', roles: ALL },
   { path: '/my-stats',               element: <PersonalStatsDashboard />, kind: 'protected', roles: ALL },
+  { path: '/profile',                element: <ProfilePage />,            kind: 'protected', roles: ALL },
 
   // Protected — STUDENT-only setup
   { path: '/student-details-form',   element: <StudentDetailsForm />,     kind: 'protected', roles: ['STUDENT'] },

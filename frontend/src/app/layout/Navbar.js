@@ -25,6 +25,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -75,7 +76,6 @@ const Navbar = () => {
             title: 'Games',
             items: [
                 { text: 'Typing Test', link: '/typingtest', icon: <KeyboardIcon /> },
-                { text: 'Falling Code', link: '/fallingtypingtest', icon: <CloudDownloadIcon /> },
                 { text: 'Syntax Sniper', link: '/syntax-sniper', icon: <GpsFixedIcon /> },
                 { text: 'Translation Terminal', link: '/translation-terminal', icon: <TerminalIcon /> },
                 { text: 'Galaxy Mode', link: '/galaxy-new', icon: <RocketLaunchIcon /> },
@@ -368,11 +368,12 @@ const Navbar = () => {
                             ) : (
                                 <Button
                                     color="inherit"
-                                    onClick={handleLogout}
-                                    startIcon={<LogoutIcon />}
+                                    component={Link}
+                                    to="/profile"
+                                    startIcon={<AccountCircleIcon />}
                                     sx={{ textTransform: 'none', borderRadius: '0.375rem' }}
                                 >
-                                    Logout
+                                    Profile
                                 </Button>
                             )}
                         </Box>

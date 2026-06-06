@@ -96,10 +96,19 @@ const Navbar = () => {
                 { text: 'Leaderboard', link: '/leaderboard', icon: <EmojiEventsIcon /> },
             ],
         },
+        ...(userRole === 'STUDENT'
+            ? [{
+                title: 'My Classes',
+                items: [
+                    { text: 'Join a Class', link: '/classes/join', icon: <SchoolIcon /> },
+                ],
+            }]
+            : []),
         ...(userRole === 'TEACHER' || userRole === 'ADMIN'
             ? [{
                 title: 'Instructor',
                 items: [
+                    { text: 'My Classes', link: '/teacher/classes', icon: <GroupsIcon /> },
                     { text: 'Instructor Module', link: '/instructor', icon: <SchoolIcon /> },
                     { text: 'Create Lesson', link: '/lesson', icon: <EditNoteIcon /> },
                     { text: 'Challenges', link: '/challenges', icon: <BoltIcon /> },

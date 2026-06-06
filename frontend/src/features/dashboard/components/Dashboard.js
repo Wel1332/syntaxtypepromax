@@ -256,16 +256,19 @@ const Dashboard = () => {
         ];
         const extras = {
             STUDENT: [
+                { label: 'Join a Class', path: '/classes/join', icon: <SchoolIcon /> },
                 { label: 'Leaderboard', path: '/leaderboard', icon: <EmojiEventsIcon /> },
                 { label: 'My Stats & Badges', path: '/my-stats', icon: <TrendingUpIcon /> },
             ],
             TEACHER: [
+                { label: 'My Classes', path: '/teacher/classes', icon: <GroupsIcon /> },
                 { label: 'My Class', path: '/teacher/class', icon: <GroupsIcon /> },
                 { label: 'Instructor', path: '/instructor', icon: <SchoolIcon /> },
                 { label: 'Create Lesson', path: '/lesson', icon: <EditNoteIcon /> },
                 { label: 'Challenges', path: '/challenges', icon: <BoltIcon /> },
             ],
             ADMIN: [
+                { label: 'My Classes', path: '/teacher/classes', icon: <GroupsIcon /> },
                 { label: 'My Class', path: '/teacher/class', icon: <GroupsIcon /> },
                 { label: 'Manage Users', path: '/admin/users', icon: <GroupsIcon /> },
                 { label: 'Instructor', path: '/instructor', icon: <SchoolIcon /> },

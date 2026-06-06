@@ -12,6 +12,9 @@ backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 *.class
 
+# Backend local secrets (never commit)
+backend/src/main/resources/secret.properties
+
 # Frontend (Node)
 frontend/node_modules/
 frontend/build/

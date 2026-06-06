@@ -1,0 +1,28 @@
+# Render Blueprint for the SyntaxType Spring Boot backend.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Secret values (sync: false) are intentionally NOT stored here — set them in the
+# Render dashboard under the service's Environment tab. PORT is injected by Render.
+services:
+  - type: web
+    name: syntaxtype-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore # closest to the ap-southeast-2 Supabase instance
+    healthCheckPath: /api/leaderboards/global
+    autoDeploy: true
+    envVars:
+      - key: DB_URL
+        value: jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require
+      - key: DB_USERNAME
+        value: postgres.cnbznzbyeqkebgjpniud
+      - key: DB_PASSWORD
+        sync: false # set in dashboard (rotate the Supabase password first)
+      - key: JWT_SECRET
+        generateValue: true # Render generates a strong random value
+      - key: ADMIN_PASSWORD
+        sync: false # set in dashboard
+      - key: FRONTEND_URL
+        sync: false # set to your Vercel URL, e.g. https://your-app.vercel.app (no trailing slash)

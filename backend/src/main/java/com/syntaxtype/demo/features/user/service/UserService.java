@@ -118,29 +118,42 @@ public class UserService {
     @org.springframework.transaction.annotation.Transactional
     public Student getOrCreateStudentProfile(User user) {
         return studentRepository.findByUser_UserId(user.getUserId())
-                .orElseGet(() -> studentRepository.save(Student.builder()
-                        .user(user)
-                        .firstName("")
-                        .lastName("")
-                        .universityEmail(user.getEmail())
-                        .course("")
-                        .yearLevel("")
-                        .className("")
-                        .section("")
-                        .build()));
+                .orElseGet(() -> {
+                    // Use a managed User from this transaction; the passed-in one may be
+                    // detached (e.g. loaded during authentication), and the profile's
+                    // cascade=ALL would otherwise try to re-persist a detached entity.
+                    User managedUser = userRepository.findByUserId(user.getUserId())
+                            .orElseThrow(() -> new NoSuchElementException(
+                                    "User not found with ID: " + user.getUserId()));
+                    return studentRepository.save(Student.builder()
+                            .user(managedUser)
+                            .firstName("")
+                            .lastName("")
+                            .universityEmail(managedUser.getEmail())
+                            .course("")
+                            .yearLevel("")
+                            .className("")
+                            .section("")
+                            .build());
+                });
     }
 
     /** Teacher counterpart of {@link #getOrCreateStudentProfile(User)}. */
     @org.springframework.transaction.annotation.Transactional
     public Teacher getOrCreateTeacherProfile(User user) {
         return teacherRepository.findByUser_UserId(user.getUserId())
-                .orElseGet(() -> teacherRepository.save(Teacher.builder()
-                        .user(user)
-                        .firstName("")
-                        .lastName("")
-                        .institution("")
-                        .subject("")
-                        .build()));
+                .orElseGet(() -> {
+                    User managedUser = userRepository.findByUserId(user.getUserId())
+                            .orElseThrow(() -> new NoSuchElementException(
+                                    "User not found with ID: " + user.getUserId()));
+                    return teacherRepository.save(Teacher.builder()
+                            .user(managedUser)
+                            .firstName("")
+                            .lastName("")
+                            .institution("")
+                            .subject("")
+                            .build());
+                });
     }
 
     public UserDTO updateEmail(Long userId, String newEmail) {

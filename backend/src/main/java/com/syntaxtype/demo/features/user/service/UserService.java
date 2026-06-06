@@ -3,6 +3,8 @@ package com.syntaxtype.demo.features.user.service;
 import com.syntaxtype.demo.core.security.CustomUserDetails;
 import com.syntaxtype.demo.core.security.JwtUtil;
 import com.syntaxtype.demo.features.user.entity.User;
+import com.syntaxtype.demo.features.user.entity.Student;
+import com.syntaxtype.demo.features.user.entity.Teacher;
 import com.syntaxtype.demo.core.enums.Role;
 import com.syntaxtype.demo.features.user.repository.UserRepository;
 import com.syntaxtype.demo.features.user.dto.UserDTO;
@@ -92,14 +94,53 @@ public class UserService {
         User user = convertFromDTO(userDTO);
         user.setUserRole(Role.TEACHER);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return convertToDTO(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+        getOrCreateTeacherProfile(savedUser);
+        return convertToDTO(savedUser);
     }
 
     public UserDTO saveUserWithStudentRole(UserDTO userDTO) {
         User user = convertFromDTO(userDTO);
         user.setUserRole(Role.STUDENT);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return convertToDTO(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+        getOrCreateStudentProfile(savedUser);
+        return convertToDTO(savedUser);
+    }
+
+    /**
+     * Returns the Student profile linked to the user, creating a placeholder one if it does
+     * not exist yet. Registration only collects username/email/password, but classroom
+     * enrollment (and other student features) require a linked Student row; the student can
+     * fill in the remaining profile fields later. Also self-heals accounts that were created
+     * before profile rows were provisioned at registration.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public Student getOrCreateStudentProfile(User user) {
+        return studentRepository.findByUser_UserId(user.getUserId())
+                .orElseGet(() -> studentRepository.save(Student.builder()
+                        .user(user)
+                        .firstName("")
+                        .lastName("")
+                        .universityEmail(user.getEmail())
+                        .course("")
+                        .yearLevel("")
+                        .className("")
+                        .section("")
+                        .build()));
+    }
+
+    /** Teacher counterpart of {@link #getOrCreateStudentProfile(User)}. */
+    @org.springframework.transaction.annotation.Transactional
+    public Teacher getOrCreateTeacherProfile(User user) {
+        return teacherRepository.findByUser_UserId(user.getUserId())
+                .orElseGet(() -> teacherRepository.save(Teacher.builder()
+                        .user(user)
+                        .firstName("")
+                        .lastName("")
+                        .institution("")
+                        .subject("")
+                        .build()));
     }
 
     public UserDTO updateEmail(Long userId, String newEmail) {

@@ -1,0 +1,12 @@
+# Keep local secrets out of the image. The Dockerfile does `COPY src ./src`, so
+# without this a local `docker build` would bake secret.properties into a layer
+# and into the packaged jar. Deployed environments supply these as env vars.
+src/main/resources/secret.properties
+
+# Build output — the image builds the jar itself.
+target/
+
+# Local run artifacts
+restart.log
+hs_err_pid*.log
+replay_pid*.log

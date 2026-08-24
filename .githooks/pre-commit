@@ -1,10 +1,32 @@
 #!/bin/sh
-# Block commits that contain secrets.
+# Block commits that contain secrets, or files we have decided stay local.
 #
 # Lives in .githooks/ rather than .git/hooks/ so it is version controlled and
 # every clone gets it. Each teammate activates it once after cloning:
 #
 #     git config core.hooksPath .githooks
+
+# ── Files that must never reach this public repo ──────────────────────────────
+# .gitignore already excludes these, but `git add -f` overrides .gitignore and
+# nothing else would object. This catches that.
+LOCAL_ONLY="CONTEXT.md"
+
+for path in $LOCAL_ONLY; do
+    if git diff --cached --name-only | grep -qx "$path"; then
+        echo "" >&2
+        echo "Commit blocked: $path is meant to stay local and is staged." >&2
+        echo "" >&2
+        echo "  This repository is public. $path indexes unfixed security" >&2
+        echo "  defects, which is more useful to an attacker than the same" >&2
+        echo "  issues sitting unremarked in source." >&2
+        echo "" >&2
+        echo "  Unstage it:  git restore --staged $path" >&2
+        echo "" >&2
+        echo "  If you have genuinely decided it should be committed, remove it" >&2
+        echo "  from LOCAL_ONLY in .githooks/pre-commit and from .gitignore." >&2
+        exit 1
+    fi
+done
 
 # Resolve the binary. winget reports "Command line alias added" but does not
 # reliably create the shim in WinGet\Links, so PATH alone is not dependable —

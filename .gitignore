@@ -15,6 +15,12 @@ backend/.mvn/wrapper/maven-wrapper.jar
 # Backend local secrets (never commit)
 backend/src/main/resources/secret.properties
 
+# Local working notes. Not secret, but this repo is public and CONTEXT.md is an
+# index of unfixed security defects — a roadmap is more useful to an attacker
+# than the same holes sitting quietly in source. Revisit once the blocking set
+# in it is closed. The pre-commit hook also refuses it, in case of `git add -f`.
+CONTEXT.md
+
 # Frontend (Node)
 frontend/node_modules/
 frontend/build/

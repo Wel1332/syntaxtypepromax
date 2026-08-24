@@ -1,0 +1,56 @@
+# gitleaks configuration for syntaxtypepromax.
+#
+# Keep gitleaks' built-in provider rules (AWS keys, GitHub tokens, etc.) and
+# layer our own on top. The built-ins cannot see a bare Postgres password —
+# it has no distinguishing format — which is exactly how this repo's database
+# credential reached a public branch and stayed there.
+
+[extend]
+useDefault = true
+
+# ── Our recurring failure mode ────────────────────────────────────────────
+# A secret property holding a real value where a bare ${ENV_VAR} belongs.
+# It has appeared in two shapes:
+#
+#   spring.datasource.password=someLiteralValue          <- rule 1
+#   spring.datasource.password=${DB_PASSWORD:someValue}  <- rule 2
+#
+# Only this form is correct, because a missing value then fails startup
+# instead of silently falling back to something the whole internet can read:
+#
+#   spring.datasource.password=${DB_PASSWORD}
+#
+# Go's regex engine (RE2) has no lookaheads, so "not a bare ${VAR}" is
+# expressed as two positive rules rather than one negative one.
+
+[[rules]]
+id = "syntaxtype-config-literal-secret"
+description = "Secret property has a literal value instead of ${ENV_VAR}"
+regex = '''(?mi)^[ \t]*(spring\.datasource\.password|jwt\.secret|admin\.password)[ \t]*=[ \t]*[^$\s].*$'''
+path = '''\.properties$'''
+
+[[rules]]
+id = "syntaxtype-config-env-default"
+description = "Secret property has a fallback default inside ${VAR:default}"
+regex = '''(?mi)^[ \t]*(spring\.datasource\.password|jwt\.secret|admin\.password)[ \t]*=[ \t]*\$\{[A-Za-z_][A-Za-z0-9_]*:[^}]+\}'''
+path = '''\.properties$'''
+
+# ── Third-party keys that belong on the server, not in the bundle ─────────
+# The Judge0 key shipped to every browser because nothing objected when it
+# was written inline. This objects.
+
+[[rules]]
+id = "syntaxtype-inline-api-key"
+description = "API key assigned inline in frontend source"
+regex = '''(?i)(rapidapi[_-]?key|x-rapidapi-key|apiKey)[ \t]*[:=][ \t]*["'][A-Za-z0-9_\-]{20,}["']'''
+path = '''\.(js|jsx|ts|tsx)$'''
+
+[allowlist]
+description = "Paths that are supposed to contain secret-shaped placeholders"
+paths = [
+    # The template ships with empty keys and explanatory comments.
+    '''secret\.properties\.example$''',
+    # Build output and dependencies are not ours to police.
+    '''(^|/)node_modules/''',
+    '''(^|/)target/''',
+]

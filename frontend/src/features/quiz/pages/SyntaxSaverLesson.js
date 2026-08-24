@@ -107,7 +107,10 @@ export default function SyntaxSaverLesson({ onBack }) {
       setFeedback("🎉 Lesson Complete!");
       // Submit to backend — awards XP, updates leaderboard, triggers badge evaluation.
       const totalScore = score + points;
-      submitScore("SYNTAX_SAVER", { score: totalScore, accuracy: 100, wpm: 0 });
+      // SYNTAX_SAVER_LESSON, not SYNTAX_SAVER: that category is the Syntax Sniper
+      // assessment game. This lesson reports a fixed accuracy and carries no
+      // modeType, so mixing the two would corrupt the pre/post test comparison.
+      submitScore("SYNTAX_SAVER_LESSON", { score: totalScore, accuracy: 100, wpm: 0 });
     }
   };
 

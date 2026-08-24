@@ -38,6 +38,7 @@ const CHALLENGE_LABELS = {
     TYPING_TESTS: 'Typing Test',
     GALAXY: 'Galaxy Challenge',
     SYNTAX_SAVER: 'Syntax Sniper',
+    SYNTAX_SAVER_LESSON: 'Syntax Saver Lesson',
     GRID: 'Grid Game',
     BOOKWORM: 'Bookworm',
     CODE_CHALLENGES: 'Translation Terminal',

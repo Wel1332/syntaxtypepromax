@@ -1,5 +1,20 @@
 /* ── Typing Test — Loop Lab aesthetic ─────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@400;500;700&display=swap');
+/* Fonts are loaded once in public/index.html, which has preconnect hints. A CSS
+   @import is only discovered after this stylesheet parses, so it serialises an
+   extra render-blocking request for faces we already have.
+   DM Mono -> JetBrains Mono: JetBrains Mono draws 0/O and 1/l/I distinctly,
+   which matters when the thing being taught is C syntax.
+   Press Start 2P -> Pixelify Sans: one retro face for the whole app, and
+   Pixelify Sans stays readable at the 9-10px sizes used below. */
+
+/* Ligatures OFF everywhere we show code. JetBrains Mono renders != -> == <= as
+   single glyphs; in a typing test the learner must press two keys for one
+   drawn glyph, and per-character highlighting drifts out of sync with what is
+   on screen. This is a correctness rule, not a stylistic one. */
+.tt-page {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
 
 :root {
   --ink:        #1a1a2e;
@@ -49,7 +64,7 @@ body {
 .tt-navbar-left  { display: flex; align-items: center; gap: 10px; }
 .tt-navbar-logo  { font-size: 20px; line-height: 1; }
 .tt-navbar-title {
-  font-family: 'Press Start 2P', monospace;
+  font-family: 'Pixelify Sans', sans-serif;
   font-size: 11px;
   color: var(--paper);
   letter-spacing: .05em;
@@ -92,7 +107,7 @@ body {
 }
 .tt-loading-inner {
   display: flex; flex-direction: column; align-items: center; gap: 14px;
-  font-family: 'DM Mono', monospace; font-size: 13px; color: var(--ink);
+  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: var(--ink);
 }
 .tt-loading-spinner {
   width: 32px; height: 32px;
@@ -132,19 +147,19 @@ body {
   display: flex; flex-direction: column; gap: 22px;
 }
 .tt-card-title {
-  font-family: 'Press Start 2P', monospace;
+  font-family: 'Pixelify Sans', sans-serif;
   font-size: 10px; color: var(--ink); letter-spacing: .05em; line-height: 1.8;
 }
 .tt-diff-section { display: flex; flex-direction: column; gap: 10px; }
 .tt-diff-header {
-  font-family: 'Press Start 2P', monospace;
+  font-family: 'Pixelify Sans', sans-serif;
   font-size: 8px; letter-spacing: .08em;
   padding-bottom: 8px; border-bottom: 2px solid;
 }
 .tt-challenge-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .tt-challenge-item { display: flex; align-items: center; gap: 10px; }
 .tt-challenge-badge {
-  font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 700;
+  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700;
   color: #fff; padding: 4px 9px; border-radius: 99px; letter-spacing: .06em; flex-shrink: 0;
 }
 .tt-challenge-btn {
@@ -169,11 +184,11 @@ body {
   padding: 13px 16px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
 }
 .tt-question-label {
-  font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 700;
+  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9px; font-weight: 700;
   color: var(--accent); text-transform: uppercase; letter-spacing: .1em; flex-shrink: 0;
 }
 .tt-question-text {
-  font-family: 'DM Mono', monospace; font-size: 13px; color: #cdd6f4; line-height: 1.5;
+  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #cdd6f4; line-height: 1.5;
 }
 
 /* ── Stats bar ── */
@@ -185,11 +200,11 @@ body {
 }
 .tt-stat { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
 .tt-stat-label {
-  font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 700;
+  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .1em; color: #7a8fa6;
 }
 .tt-stat-value {
-  font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 700;
+  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 28px; font-weight: 700;
   letter-spacing: 4px; background: #000; padding: 7px 14px;
   border-radius: var(--r-sm); border: 2px solid #1e2d3d;
   min-width: 90px; text-align: center; line-height: 1;
@@ -204,7 +219,7 @@ body {
 .tt-code-area {
   background: var(--screen); border-radius: var(--r);
   border: 2px solid #2a2a3e; box-shadow: 0 0 0 3px #0a1018, var(--sh);
-  padding: 16px 18px; font-family: 'DM Mono', monospace;
+  padding: 16px 18px; font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 14px; line-height: 1.9; color: #cdd6f4;
   cursor: text; min-height: 160px; white-space: pre-wrap;
   transition: border-color .2s, box-shadow .2s; position: relative;
@@ -276,10 +291,10 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 .tt-complete-msg {
-  font-family: 'Press Start 2P', monospace; font-size: 10px;
+  font-family: 'Pixelify Sans', sans-serif; font-size: 10px;
   color: var(--paper); letter-spacing: .06em; line-height: 1.7; text-align: center;
 }
-.tt-complete-detail { font-family: 'DM Mono', monospace; font-size: 12px; color: #7a8fa6; }
+.tt-complete-detail { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #7a8fa6; }
 .tt-complete-detail strong { color: #a6e3a1; }
 
 /* ── Scrollbar ── */

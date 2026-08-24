@@ -408,7 +408,7 @@ const Dashboard = () => {
                                         color: 'text.primary',
                                         fontSize: { xs: '1.75rem', md: '2.25rem' },
                                         lineHeight: 1,
-                                        fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif',
+                                        fontFamily: '"DM Sans", sans-serif',
                                         fontVariantNumeric: 'tabular-nums',
                                     }}
                                 >

@@ -55,7 +55,7 @@ export function StatTile({ label, value, icon, accent }) {
                         color: "text.primary",
                         fontSize: { xs: "1.5rem", md: "2rem" },
                         lineHeight: 1,
-                        fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif',
+                        fontFamily: '"DM Sans", sans-serif',
                         fontVariantNumeric: "tabular-nums",
                     }}
                 >

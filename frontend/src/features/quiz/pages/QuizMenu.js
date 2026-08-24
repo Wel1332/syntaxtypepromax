@@ -105,7 +105,7 @@ function QuizCard({ icon, title, desc, difficulty, onClick, delay, T }) {
       {/* difficulty chip */}
       <span
         style={{
-          fontFamily: "'DM Mono', monospace",
+          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
           fontSize: 9,
           padding: "3px 10px",
           borderRadius: 99,
@@ -147,7 +147,7 @@ function QuizCard({ icon, title, desc, difficulty, onClick, delay, T }) {
       {/* title */}
       <div
         style={{
-          fontFamily: "'Press Start 2P', monospace",
+          fontFamily: "'Pixelify Sans', sans-serif",
           fontSize: 9,
           color: hov ? T.paper : T.textPrimary,
           lineHeight: 1.6,
@@ -159,7 +159,7 @@ function QuizCard({ icon, title, desc, difficulty, onClick, delay, T }) {
       {/* desc */}
       <div
         style={{
-          fontFamily: "'DM Mono', monospace",
+          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
           fontSize: 11,
           color: hov ? (isDark ? "#a8b0c4" : "#7a8fa6") : T.descText,
         }}
@@ -173,7 +173,7 @@ function QuizCard({ icon, title, desc, difficulty, onClick, delay, T }) {
           position: "absolute",
           bottom: 14,
           right: 16,
-          fontFamily: "'Press Start 2P', monospace",
+          fontFamily: "'Pixelify Sans', sans-serif",
           fontSize: 9,
           color: T.accent,
           opacity: hov ? 1 : 0,
@@ -220,7 +220,7 @@ export default function QuizMenu() {
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <h2
           style={{
-            fontFamily: "'Press Start 2P', monospace",
+            fontFamily: "'Pixelify Sans', sans-serif",
             fontSize: 12,
             color: T.textPrimary,
             display: "flex",
@@ -247,7 +247,7 @@ export default function QuizMenu() {
 
         <p
           style={{
-            fontFamily: "'DM Mono', monospace",
+            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
             fontSize: 11,
             color: T.textSecondary,
             marginTop: 6,

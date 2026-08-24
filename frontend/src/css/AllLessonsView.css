@@ -2,7 +2,7 @@
   max-width: 1000px;
   margin: 40px auto;
   padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Font intentionally unset — inherits DM Sans from the MUI theme via CssBaseline. */
 }
 
 .lesson-grid {

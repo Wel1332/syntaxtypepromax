@@ -30,13 +30,13 @@
 
 /* ── HEADER ───────────────────────────────────────────── */
 .st-header h2 {
-  font-family: 'Press Start 2P', monospace;
+  font-family: 'Pixelify Sans', sans-serif;
   font-size: 11px;
   color: #1a1a2e;
 }
 
 .st-header p {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 11px;
   color: #888;
   margin-top: 6px;
@@ -71,7 +71,7 @@
   background: #ede7d9;
   cursor: pointer;
 
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 12px;
   font-weight: bold;
 
@@ -117,7 +117,7 @@
   background: #1a1a2e;
   color: #fff;
 
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 12px;
 
   cursor: grab;
@@ -133,13 +133,13 @@
 .st-feedback {
   margin-top: 16px;
   font-weight: bold;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 /* ── SCORE ────────────────────────────────────────────── */
 .st-score {
   margin-top: 6px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 /* ── ACTIONS ──────────────────────────────────────────── */

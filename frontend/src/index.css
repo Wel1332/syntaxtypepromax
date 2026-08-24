@@ -1,11 +1,21 @@
 /* src/index.css or src/App.css */
 body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif;
+    /* No font-family here. The MUI theme owns it (DM Sans, via CssBaseline in
+       ThemeContext). A body rule in this file competes with the theme at equal
+       specificity and whichever stylesheet lands last wins — which is how the
+       app ended up rendering three different sans faces. */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    /* Ligatures off app-wide. JetBrains Mono renders != -> == <= as single
+       glyphs; in games where a learner types C one keystroke at a time, one
+       drawn glyph for two characters breaks per-character highlighting and
+       misrepresents what they must press. Both properties inherit, so this
+       covers every code surface. The cost is DM Sans's fi/fl ligatures, which
+       is a fair trade in an app about exact characters. */
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "calt" 0;
 }
 
 /* Global styles for links, buttons, etc. */

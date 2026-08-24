@@ -1,6 +1,6 @@
 .bookworm-container {
   text-align: center;
-  font-family: "Segoe UI", Arial, sans-serif;
+  /* Font intentionally unset — inherits DM Sans from the MUI theme. */
   margin-top: 40px;
 }
 

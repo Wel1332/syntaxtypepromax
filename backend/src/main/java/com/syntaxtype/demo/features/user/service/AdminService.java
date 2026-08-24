@@ -1,9 +1,7 @@
 package com.syntaxtype.demo.features.user.service;
 
 import com.syntaxtype.demo.features.user.dto.AdminDTO;
-import com.syntaxtype.demo.features.user.dto.StudentDTO;
 import com.syntaxtype.demo.features.user.entity.Admin;
-import com.syntaxtype.demo.features.user.entity.Student;
 import com.syntaxtype.demo.features.user.entity.User;
 import com.syntaxtype.demo.features.user.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;

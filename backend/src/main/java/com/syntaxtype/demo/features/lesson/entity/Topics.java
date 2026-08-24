@@ -2,8 +2,6 @@ package com.syntaxtype.demo.features.lesson.entity;
 
 import lombok.*;
 
-import org.springframework.lang.NonNull;
-
 import com.syntaxtype.demo.features.user.entity.Teacher;
 
 import jakarta.persistence.*;

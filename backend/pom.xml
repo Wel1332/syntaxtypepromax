@@ -55,15 +55,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Declared once, version managed by the Spring Boot parent. A second,
+		     explicitly versioned copy of this dependency used to sit below and
+		     Maven warned that it "threatens the stability of your build". -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>42.7.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -78,6 +76,15 @@
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- @DataJpaTest replaces the real DataSource with an embedded one. Without
+		     a database on the test classpath it fails with "Failed to replace
+		     DataSource with an embedded database for tests". Test scope only —
+		     production still runs against Postgres. -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 

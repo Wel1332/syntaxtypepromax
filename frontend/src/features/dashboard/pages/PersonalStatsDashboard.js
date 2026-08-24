@@ -33,7 +33,7 @@ const StatCard = ({ label, value, accent }) => (
                     color: accent || 'text.primary',
                     fontVariantNumeric: 'tabular-nums',
                     lineHeight: 1,
-                    fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif',
+                    fontFamily: '"DM Sans", sans-serif',
                 }}
             >
                 {value}
@@ -320,7 +320,7 @@ const PersonalStatsDashboard = () => {
                                 <StarIcon sx={{ fontSize: 44, color: '#FFD700' }} />
                                 <Box>
                                     <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>Lifetime XP</Typography>
-                                    <Typography variant="h3" sx={{ color: '#FFD700', fontWeight: 800, lineHeight: 1, fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif', fontVariantNumeric: 'tabular-nums', fontSize: { xs: '2rem', md: '3rem' } }}>
+                                    <Typography variant="h3" sx={{ color: '#FFD700', fontWeight: 800, lineHeight: 1, fontFamily: '"DM Sans", sans-serif', fontVariantNumeric: 'tabular-nums', fontSize: { xs: '2rem', md: '3rem' } }}>
                                         {lifetimeXp.toLocaleString()}
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mt: 0.5 }}>

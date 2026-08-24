@@ -297,7 +297,7 @@ const TeacherClassDashboard = () => {
                                         color: 'text.primary',
                                         fontSize: { xs: '1.75rem', md: '2.25rem' },
                                         lineHeight: 1,
-                                        fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif',
+                                        fontFamily: '"DM Sans", sans-serif',
                                         fontVariantNumeric: 'tabular-nums',
                                     }}
                                 >
@@ -349,7 +349,7 @@ const TeacherClassDashboard = () => {
                                                     {g.label}
                                                 </Typography>
                                                 <Stack direction="row" alignItems="baseline" spacing={1} sx={{ mt: 1 }}>
-                                                    <Typography variant="h4" sx={{ color: impColor, fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+                                                    <Typography variant="h4" sx={{ color: impColor, fontFamily: '"DM Sans", sans-serif', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
                                                         {imp > 0 ? '+' : ''}{imp}
                                                     </Typography>
                                                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>pp accuracy</Typography>

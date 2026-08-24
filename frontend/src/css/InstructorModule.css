@@ -4,7 +4,9 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  font-family: sans-serif;
+  /* No font-family here. CRA bundles every imported stylesheet, so this rule
+     applied to html/body app-wide and overrode the theme's DM Sans on pages
+     that have nothing to do with the instructor module. */
 }
 
 /* NAVBAR */

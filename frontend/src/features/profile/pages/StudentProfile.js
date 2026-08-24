@@ -350,7 +350,7 @@ function ScorePill({ meta, value, subtitle }) {
             <Typography
                 sx={{
                     color: "text.primary", fontWeight: 700,
-                    fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif',
+                    fontFamily: '"DM Sans", sans-serif',
                     fontVariantNumeric: "tabular-nums",
                 }}
             >

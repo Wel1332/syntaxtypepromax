@@ -37,7 +37,10 @@ export const PALETTE_LIGHT_SEMANTIC = {
 };
 
 export const FONT_MONO = '"JetBrains Mono", Menlo, Monaco, Consolas, monospace';
-export const FONT_PIXEL = '"Press Start 2P", monospace';
+// Pixelify Sans rather than Press Start 2P: one retro face across the app, it
+// is the one loaded in index.html, and it stays legible at the 9-13px sizes
+// these labels use. Press Start 2P has no lowercase and blurs below ~16px.
+export const FONT_PIXEL = '"Pixelify Sans", sans-serif';
 export const FONT_BODY = '"DM Sans", system-ui, sans-serif';
 
 // Drop-in `sx={gradientText}` for the signature pink → salmon → gold heading.

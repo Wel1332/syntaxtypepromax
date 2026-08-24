@@ -1,7 +1,6 @@
 package com.syntaxtype.demo.features.lesson.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.syntaxtype.demo.features.lesson.entity.Quiz;
 import jakarta.persistence.*;
 
 @Entity

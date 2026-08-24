@@ -7,7 +7,6 @@ import com.syntaxtype.demo.features.user.entity.User;
 import com.syntaxtype.demo.features.user.repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

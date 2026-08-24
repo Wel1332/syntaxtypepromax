@@ -6,7 +6,6 @@ import com.syntaxtype.demo.features.lesson.entity.Topics;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface AchievementsRepository extends JpaRepository<Achievements, Long> {
     List<Achievements> findByName(String name);

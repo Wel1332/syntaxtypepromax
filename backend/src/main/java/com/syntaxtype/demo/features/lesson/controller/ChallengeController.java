@@ -6,6 +6,7 @@ import com.syntaxtype.demo.features.lesson.entity.Challenge;
 import com.syntaxtype.demo.features.lesson.service.ChallengeService;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class ChallengeController {
     }
 
     // Create a normal challenge (Paragraph)
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PostMapping
     public Challenge createNormalChallenge(@RequestBody Challenge challenge) {
         challenge.setType(ChallengeType.PARAGRAPH);  // Ensure the challenge is of type 'PARAGRAPH'
@@ -29,6 +31,7 @@ public class ChallengeController {
     }
 
     // Create a falling challenge (List of words)
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PostMapping("/falling")
     public ResponseEntity<Challenge> createFallingChallenge(@RequestBody Challenge challenge) {
         if (challenge.getWords() == null || challenge.getWords().isEmpty()) {
@@ -54,11 +57,13 @@ public class ChallengeController {
     }
 
     // Get all normal challenges (Paragraph)
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping
     public List<Challenge> getAllNormalChallenges() {
         return service.getAllNormalChallenges(); // Fetching all normal typing challenges
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/normal/{id}")
     public ResponseEntity<Challenge> getNormalChallengeById(@PathVariable Long id) {
         Challenge challenge = service.getNormalChallengeById(id);
@@ -70,11 +75,13 @@ public class ChallengeController {
     }
 
     // Get all falling challenges
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/falling")
     public List<Challenge> getAllFallingChallenges() {
         return service.getAllFallingChallenges(); // Fetching all falling typing challenges
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/falling/{id}")
     public ResponseEntity<Challenge> getFallingChallengeById(@PathVariable Long id) {
         Challenge challenge = service.getFallingChallengeById(id);
@@ -85,6 +92,7 @@ public class ChallengeController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/{id}")
     public ResponseEntity<Challenge> getChallengeById(@PathVariable Long id) {
         Challenge challenge = service.findById(id);
@@ -96,11 +104,13 @@ public class ChallengeController {
     }
 
     // Delete a challenge by ID
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @DeleteMapping("/{id}")
     public void deleteChallenge(@PathVariable Long id) {
         service.deleteById(id);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @DeleteMapping("/falling/{id}")
     public ResponseEntity<Void> deleteFallingChallenge(@PathVariable Long id) {
         Challenge challenge = service.findById(id);
@@ -113,6 +123,7 @@ public class ChallengeController {
     }
 
     // Edit a challenge by ID
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PutMapping("/{id}")
     public ResponseEntity<Challenge> editChallenge(@PathVariable Long id, @RequestBody Challenge challenge) {
         Challenge existingChallenge = service.findById(id);
@@ -134,7 +145,9 @@ public class ChallengeController {
         } else {
             return ResponseEntity.notFound().build();
         }
-    } @PostMapping("/falling/advanced")
+    }
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
+    @PostMapping("/falling/advanced")
     public ResponseEntity<ChallengeDTO> createAdvancedFallingChallenge(@RequestBody Challenge challenge) {
         // Optionally you can still set the type here or leave it as is
         challenge.setType(null); // or remove this line if you want to keep type
@@ -155,11 +168,13 @@ public class ChallengeController {
         return ResponseEntity.ok(dto);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/falling/advanced")
     public List<Challenge> getAllAdvancedFallingChallenges() {
         return service.getAllAdvancedFallingChallenges();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/falling/advanced/{id}")
     public ResponseEntity<Challenge> getAdvancedFallingChallengeById(@PathVariable Long id) {
         Challenge challenge = service.getAdvancedFallingChallengeById(id);
@@ -170,6 +185,7 @@ public class ChallengeController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PutMapping("/falling/advanced/{id}")
     public ResponseEntity<Challenge> editAdvancedFallingChallenge(@PathVariable Long id, @RequestBody Challenge challenge) {
         Challenge existingChallenge = service.getAdvancedFallingChallengeById(id);
@@ -190,6 +206,7 @@ public class ChallengeController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @DeleteMapping("/falling/advanced/{id}")
     public ResponseEntity<Void> deleteAdvancedFallingChallenge(@PathVariable Long id) {
         Challenge challenge = service.getAdvancedFallingChallengeById(id);

@@ -38,6 +38,7 @@ const CHALLENGE_LABELS = {
     TYPING_TESTS: 'Typing Test',
     GALAXY: 'Galaxy Challenge',
     SYNTAX_SAVER: 'Syntax Sniper',
+    SYNTAX_SAVER_LESSON: 'Syntax Saver Lesson',
     GRID: 'Grid Game',
     BOOKWORM: 'Bookworm',
     CODE_CHALLENGES: 'Translation Terminal',
@@ -407,7 +408,7 @@ const Dashboard = () => {
                                         color: 'text.primary',
                                         fontSize: { xs: '1.75rem', md: '2.25rem' },
                                         lineHeight: 1,
-                                        fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif',
+                                        fontFamily: '"DM Sans", sans-serif',
                                         fontVariantNumeric: 'tabular-nums',
                                     }}
                                 >

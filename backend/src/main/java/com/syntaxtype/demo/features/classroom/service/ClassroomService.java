@@ -10,9 +10,9 @@ import com.syntaxtype.demo.features.user.dto.StudentDTO;
 import com.syntaxtype.demo.features.user.entity.Student;
 import com.syntaxtype.demo.features.user.entity.Teacher;
 import com.syntaxtype.demo.features.user.entity.User;
-import com.syntaxtype.demo.features.user.repository.StudentRepository;
-import com.syntaxtype.demo.features.user.repository.TeacherRepository;
+import com.syntaxtype.demo.core.enums.Role;
 import com.syntaxtype.demo.features.user.service.StudentService;
+import com.syntaxtype.demo.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -32,9 +32,8 @@ public class ClassroomService {
 
     private final ClassroomRepository classroomRepository;
     private final ClassEnrollmentRepository enrollmentRepository;
-    private final TeacherRepository teacherRepository;
-    private final StudentRepository studentRepository;
     private final StudentService studentService;
+    private final UserService userService;
 
     // ── Teacher operations ────────────────────────────────────────────────
 
@@ -123,15 +122,21 @@ public class ClassroomService {
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private Teacher requireTeacher(User user) {
-        return teacherRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Your account is not set up as a teacher."));
+        if (user.getUserRole() != Role.TEACHER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Your account is not set up as a teacher.");
+        }
+        // Provisions the Teacher profile on demand for accounts that predate it.
+        return userService.getOrCreateTeacherProfile(user);
     }
 
     private Student requireStudent(User user) {
-        return studentRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Your account is not set up as a student."));
+        if (user.getUserRole() != Role.STUDENT) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Your account is not set up as a student.");
+        }
+        // Provisions the Student profile on demand for accounts that predate it.
+        return userService.getOrCreateStudentProfile(user);
     }
 
     private Classroom requireClassroom(Long classroomId) {

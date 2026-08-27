@@ -1,6 +1,5 @@
 package com.syntaxtype.demo.features.user.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.time.LocalDateTime;

@@ -3,6 +3,7 @@ package com.syntaxtype.demo.features.lesson.controller;
 
 import com.syntaxtype.demo.features.lesson.entity.Quiz;
 import com.syntaxtype.demo.features.lesson.service.QuizService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,21 +18,25 @@ public class QuizController {
         this.quizService = quizService;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping
     public List<Quiz> getAll() {
         return quizService.getAll();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/{id}")
     public Quiz getById(@PathVariable Long id) {
         return quizService.getById(id);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PostMapping
     public Quiz create(@RequestBody Quiz quiz) {
         return quizService.save(quiz);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PutMapping("/{id}")
     public Quiz update(@PathVariable Long id, @RequestBody Quiz updatedQuiz) {
         Quiz quiz = quizService.getById(id);
@@ -42,6 +47,7 @@ public class QuizController {
         return quizService.save(quiz);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         quizService.delete(id);

@@ -1,9 +1,5 @@
 package com.syntaxtype.demo.core.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-
 // @ControllerAdvice // Applied to all @Controller classes
 public class GlobalExceptionHandler {
 

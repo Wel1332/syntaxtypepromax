@@ -10,7 +10,18 @@ public enum Category {
     FOUR_PICS,
     CODE_CHALLENGES,
     MAP,
+    // Despite the name, SYNTAX_SAVER is the Syntax Sniper *game* — the label maps
+    // in Dashboard.js and AnalyticsController.GAME_LABELS both read it that way,
+    // and it is one of the three pre/post assessment games in the MVP validation
+    // study. Renaming it would require migrating the challenge_type strings
+    // already stored in the scores table, so the name stays and this comment
+    // carries the meaning.
     SYNTAX_SAVER,
+    // The Syntax Saver *lesson* — a guided tutorial that submits a score only to
+    // award XP and trigger badges. Kept separate from SYNTAX_SAVER so its
+    // untagged, fixed-accuracy submissions cannot contaminate Syntax Sniper's
+    // pre/post assessment data.
+    SYNTAX_SAVER_LESSON,
     CHALLENGES,
     OVERALL
 }

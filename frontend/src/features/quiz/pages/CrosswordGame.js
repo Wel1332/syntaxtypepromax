@@ -412,7 +412,7 @@ const CrosswordGame = () => {
   // Styling (using inline styles for single-file component simplicity)
   const styles = {
     container: {
-      fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
+      fontFamily: '"DM Sans", system-ui, sans-serif',
       backgroundColor: "#f9fafb",
       minHeight: "100vh",
       padding: 20,

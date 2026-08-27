@@ -7,15 +7,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -80,15 +76,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Add frontend URL to allowed origins; support comma separated values in FRONTEND_URL
-        List<String> allowedOrigins = List.of("http://localhost:3000", "http://localhost:5173", "https://syntaxtype-deploy-omega.vercel.app/");
+        // Local dev origins are always allowed. Production origin(s) come from the
+        // FRONTEND_URL env var (comma-separated for multiple, e.g. a Vercel URL).
+        List<String> allowedOrigins = new java.util.ArrayList<>(
+                List.of("http://localhost:3000", "http://localhost:5173"));
         if (frontendUrl != null && !frontendUrl.isEmpty()) {
-            // handle multiple origins separated by comma
-            String[] extras = frontendUrl.split(",");
-            for (String origin : extras) {
-                String trimmed = origin.trim();
+            for (String origin : frontendUrl.split(",")) {
+                // The browser Origin header never has a trailing slash, so strip it
+                // to avoid a silent no-match that surfaces as a CORS error.
+                String trimmed = origin.trim().replaceAll("/+$", "");
                 if (!trimmed.isEmpty() && !allowedOrigins.contains(trimmed)) {
-                    allowedOrigins = new java.util.ArrayList<>(allowedOrigins);
                     allowedOrigins.add(trimmed);
                 }
             }

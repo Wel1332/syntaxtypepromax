@@ -413,7 +413,7 @@ export default function TeacherProfile() {
                                                 <Box sx={{ minWidth: 100 }}>
                                                     <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.25 }}>
                                                         <Typography variant="caption" sx={{ color: "text.secondary" }}>WPM</Typography>
-                                                        <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>{s.wpm}</Typography>
+                                                        <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 700, fontFamily: '"DM Sans", sans-serif' }}>{s.wpm}</Typography>
                                                     </Stack>
                                                     <LinearProgress
                                                         variant="determinate"

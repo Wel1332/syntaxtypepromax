@@ -1,8 +1,10 @@
 package com.syntaxtype.demo.features.statistics.service;
 
 import com.syntaxtype.demo.features.statistics.dto.UserStatisticsDTO;
+import com.syntaxtype.demo.features.statistics.entity.LessonAttempts;
 import com.syntaxtype.demo.features.statistics.entity.UserStatistics;
 import com.syntaxtype.demo.features.user.entity.User;
+import com.syntaxtype.demo.features.statistics.repository.LessonAttemptsRepository;
 import com.syntaxtype.demo.features.statistics.repository.UserStatisticsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserStatisticsService {
     private final UserStatisticsRepository userStatisticsRepository;
+    private final LessonAttemptsRepository lessonAttemptsRepository;
 
     public List<UserStatisticsDTO> findAll() {
         return userStatisticsRepository.findAll().stream()
@@ -261,8 +264,59 @@ public class UserStatisticsService {
         recordSession(user, 0, 0, 0, amount);
     }
 
+    /**
+     * Aggregates a single student's attempts at one lesson into a statistics snapshot.
+     * WPM is the personal best (max), accuracy the running average, completion time
+     * contributes the fastest (min) and total spent, and the attempt count is reported
+     * as totalTestsTaken. Fields not tracked per attempt (words typed, errors, XP) stay
+     * null. When the student has never attempted the lesson, returns a zeroed snapshot
+     * tagged with the userId rather than a fully empty DTO.
+     */
     public UserStatisticsDTO getStatisticsForUserAndLesson(Long userId, Long lessonId) {
-        // TODO: Implement actual logic to fetch statistics
-        return new UserStatisticsDTO(); // Return dummy or real data as needed
+        List<LessonAttempts> attempts =
+                lessonAttemptsRepository.findByStudent_StudentIdAndLesson_ChallengeId(userId, lessonId);
+
+        if (attempts.isEmpty()) {
+            return UserStatisticsDTO.builder()
+                    .userId(userId)
+                    .wordsPerMinute(0).accuracy(0)
+                    .totalTimeSpent(0).totalTestsTaken(0)
+                    .fastestClearTime(0)
+                    .build();
+        }
+
+        int bestWpm = 0;
+        long accuracySum = 0;
+        int accuracyCount = 0;
+        int totalTime = 0;
+        Integer fastestClear = null;
+
+        for (LessonAttempts attempt : attempts) {
+            if (attempt.getWpm() != null) {
+                bestWpm = Math.max(bestWpm, attempt.getWpm());
+            }
+            if (attempt.getAccuracy() != null) {
+                accuracySum += attempt.getAccuracy();
+                accuracyCount++;
+            }
+            Integer time = attempt.getCompletionTime();
+            if (time != null) {
+                totalTime += time;
+                if (time > 0 && (fastestClear == null || time < fastestClear)) {
+                    fastestClear = time;
+                }
+            }
+        }
+
+        int avgAccuracy = accuracyCount == 0 ? 0 : (int) (accuracySum / accuracyCount);
+
+        return UserStatisticsDTO.builder()
+                .userId(userId)
+                .wordsPerMinute(bestWpm)
+                .accuracy(avgAccuracy)
+                .totalTimeSpent(totalTime)
+                .totalTestsTaken(attempts.size())
+                .fastestClearTime(fastestClear != null ? fastestClear : 0)
+                .build();
     }
 }

@@ -3,6 +3,8 @@ package com.syntaxtype.demo.features.user.service;
 import com.syntaxtype.demo.core.security.CustomUserDetails;
 import com.syntaxtype.demo.core.security.JwtUtil;
 import com.syntaxtype.demo.features.user.entity.User;
+import com.syntaxtype.demo.features.user.entity.Student;
+import com.syntaxtype.demo.features.user.entity.Teacher;
 import com.syntaxtype.demo.core.enums.Role;
 import com.syntaxtype.demo.features.user.repository.UserRepository;
 import com.syntaxtype.demo.features.user.dto.UserDTO;
@@ -15,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -92,14 +93,66 @@ public class UserService {
         User user = convertFromDTO(userDTO);
         user.setUserRole(Role.TEACHER);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return convertToDTO(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+        getOrCreateTeacherProfile(savedUser);
+        return convertToDTO(savedUser);
     }
 
     public UserDTO saveUserWithStudentRole(UserDTO userDTO) {
         User user = convertFromDTO(userDTO);
         user.setUserRole(Role.STUDENT);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return convertToDTO(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+        getOrCreateStudentProfile(savedUser);
+        return convertToDTO(savedUser);
+    }
+
+    /**
+     * Returns the Student profile linked to the user, creating a placeholder one if it does
+     * not exist yet. Registration only collects username/email/password, but classroom
+     * enrollment (and other student features) require a linked Student row; the student can
+     * fill in the remaining profile fields later. Also self-heals accounts that were created
+     * before profile rows were provisioned at registration.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public Student getOrCreateStudentProfile(User user) {
+        return studentRepository.findByUser_UserId(user.getUserId())
+                .orElseGet(() -> {
+                    // Use a managed User from this transaction; the passed-in one may be
+                    // detached (e.g. loaded during authentication), and the profile's
+                    // cascade=ALL would otherwise try to re-persist a detached entity.
+                    User managedUser = userRepository.findByUserId(user.getUserId())
+                            .orElseThrow(() -> new NoSuchElementException(
+                                    "User not found with ID: " + user.getUserId()));
+                    return studentRepository.save(Student.builder()
+                            .user(managedUser)
+                            .firstName("")
+                            .lastName("")
+                            .universityEmail(managedUser.getEmail())
+                            .course("")
+                            .yearLevel("")
+                            .className("")
+                            .section("")
+                            .build());
+                });
+    }
+
+    /** Teacher counterpart of {@link #getOrCreateStudentProfile(User)}. */
+    @org.springframework.transaction.annotation.Transactional
+    public Teacher getOrCreateTeacherProfile(User user) {
+        return teacherRepository.findByUser_UserId(user.getUserId())
+                .orElseGet(() -> {
+                    User managedUser = userRepository.findByUserId(user.getUserId())
+                            .orElseThrow(() -> new NoSuchElementException(
+                                    "User not found with ID: " + user.getUserId()));
+                    return teacherRepository.save(Teacher.builder()
+                            .user(managedUser)
+                            .firstName("")
+                            .lastName("")
+                            .institution("")
+                            .subject("")
+                            .build());
+                });
     }
 
     public UserDTO updateEmail(Long userId, String newEmail) {
@@ -217,7 +270,12 @@ public class UserService {
 
         User user = new User();
 
-        user.setUserId(userDTO.getUserId());
+        // The client's userId is deliberately not mapped. Every caller of this method is a
+        // create path, and a non-null ID makes Spring Data treat the entity as detached, so
+        // save() issues a merge (UPDATE) instead of an INSERT. Because /api/auth/register is
+        // public, mapping it let an unauthenticated request overwrite any existing account —
+        // including an admin — by posting that account's ID with fresh, non-colliding
+        // username and email values, which sail past the duplicate guards in AuthController.
         user.setUsername(userDTO.getUsername());
         user.setEmail(userDTO.getEmail());
 

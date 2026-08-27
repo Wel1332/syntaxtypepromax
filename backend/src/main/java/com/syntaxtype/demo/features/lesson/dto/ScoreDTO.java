@@ -1,7 +1,6 @@
 package com.syntaxtype.demo.features.lesson.dto;
 
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Data
 @Builder

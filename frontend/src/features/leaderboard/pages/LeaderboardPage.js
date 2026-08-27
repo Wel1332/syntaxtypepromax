@@ -43,7 +43,8 @@ const GAME_OPTIONS = [
   { value: "FOUR_PICS", label: "Four Pics" },
   { value: "CODE_CHALLENGES", label: "Code Challenges" },
   { value: "MAP", label: "Map Game" },
-  { value: "SYNTAX_SAVER", label: "Syntax Saver" },
+  { value: "SYNTAX_SAVER", label: "Syntax Sniper" },
+  { value: "SYNTAX_SAVER_LESSON", label: "Syntax Saver Lesson" },
   { value: "CHALLENGES", label: "Challenges" },
 ];
 

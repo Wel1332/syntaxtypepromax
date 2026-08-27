@@ -1,0 +1,77 @@
+#!/bin/sh
+# Block commits that contain secrets, or files we have decided stay local.
+#
+# Lives in .githooks/ rather than .git/hooks/ so it is version controlled and
+# every clone gets it. Each teammate activates it once after cloning:
+#
+#     git config core.hooksPath .githooks
+
+# ── Files that must never reach this public repo ──────────────────────────────
+# .gitignore already excludes these, but `git add -f` overrides .gitignore and
+# nothing else would object. This catches that.
+LOCAL_ONLY="CONTEXT.md"
+
+for path in $LOCAL_ONLY; do
+    if git diff --cached --name-only | grep -qx "$path"; then
+        echo "" >&2
+        echo "Commit blocked: $path is meant to stay local and is staged." >&2
+        echo "" >&2
+        echo "  This repository is public. $path indexes unfixed security" >&2
+        echo "  defects, which is more useful to an attacker than the same" >&2
+        echo "  issues sitting unremarked in source." >&2
+        echo "" >&2
+        echo "  Unstage it:  git restore --staged $path" >&2
+        echo "" >&2
+        echo "  If you have genuinely decided it should be committed, remove it" >&2
+        echo "  from LOCAL_ONLY in .githooks/pre-commit and from .gitignore." >&2
+        exit 1
+    fi
+done
+
+# Resolve the binary. winget reports "Command line alias added" but does not
+# reliably create the shim in WinGet\Links, so PATH alone is not dependable —
+# and a git hook may run from VS Code or another client with a different PATH
+# than your terminal. Fall back to the winget package directory.
+if command -v gitleaks >/dev/null 2>&1; then
+    GITLEAKS="gitleaks"
+else
+    for candidate in \
+        "$LOCALAPPDATA"/Microsoft/WinGet/Packages/Gitleaks.Gitleaks_*/gitleaks.exe \
+        "$HOME"/AppData/Local/Microsoft/WinGet/Packages/Gitleaks.Gitleaks_*/gitleaks.exe
+    do
+        [ -x "$candidate" ] && GITLEAKS="$candidate" && break
+    done
+fi
+
+if [ -z "$GITLEAKS" ]; then
+    echo "" >&2
+    echo "pre-commit: gitleaks not found, so staged changes were NOT scanned." >&2
+    echo "Install it with:  winget install gitleaks" >&2
+    echo "(or bypass deliberately with: git commit --no-verify)" >&2
+    exit 1
+fi
+
+# gitleaks renamed this subcommand at v8.19 — `protect` became `git`.
+# Pick whichever the installed build understands.
+if "$GITLEAKS" git --help >/dev/null 2>&1; then
+    SCAN_CMD="git"
+else
+    SCAN_CMD="protect"
+fi
+
+# --redact keeps the secret itself out of terminal scrollback and CI logs.
+if ! "$GITLEAKS" "$SCAN_CMD" --staged --redact; then
+    echo "" >&2
+    echo "Commit blocked: gitleaks found a secret in your staged changes." >&2
+    echo "" >&2
+    echo "  Move the value to an environment variable, or to" >&2
+    echo "  backend/src/main/resources/secret.properties (gitignored)." >&2
+    echo "" >&2
+    echo "  A config property must reference the variable with no default:" >&2
+    echo "      jwt.secret=\${JWT_SECRET}          correct" >&2
+    echo "      jwt.secret=\${JWT_SECRET:abc123}   blocked - the default leaks" >&2
+    echo "" >&2
+    echo "  If it is genuinely a false positive, add it to the allowlist" >&2
+    echo "  in .gitleaks.toml rather than bypassing the hook." >&2
+    exit 1
+fi

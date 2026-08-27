@@ -20,27 +20,27 @@ public class LessonsController {
     private final LessonsService lessonsService;
 
 
-    /*@PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")*/
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping
     public ResponseEntity<List<LessonsDTO>> getAllLessons() {
         return ResponseEntity.ok(lessonsService.findAll());
     }
 
 
-    /*@PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")*/
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/{lessonId}")
     public ResponseEntity<Optional<LessonsDTO>> getById(@PathVariable Long lessonId) {
         return ResponseEntity.ok(lessonsService.findByLessonId(lessonId));
     }
 
-    /*@PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")*/
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     @GetMapping("/title/{title}")
     public ResponseEntity<List<LessonsDTO>> getByTitle(@PathVariable String title) {
         return ResponseEntity.ok(lessonsService.findByTitle(title));
     }
 
 
-    /*@PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")*/
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PostMapping
     public ResponseEntity<LessonsDTO> createLesson(@RequestBody LessonsDTO lessonDTO) {
         LessonsDTO savedLesson = lessonsService.save(lessonDTO); // FIXED: saving it
@@ -48,7 +48,7 @@ public class LessonsController {
     }
 
 
-    /*@PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")*/
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PatchMapping("/{lessonId}/title")
     public ResponseEntity<LessonsDTO> updateTitle(@PathVariable Long lessonId, @RequestParam String newTitle) {
         LessonsDTO updated = lessonsService.updateTitle(lessonId, newTitle);
@@ -56,7 +56,7 @@ public class LessonsController {
     }
 
 
-    /*@PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")*/
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
         try {
@@ -68,6 +68,7 @@ public class LessonsController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error");
         }
     }
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PutMapping("/{lessonId}")
     public ResponseEntity<LessonsDTO> updateLesson(@PathVariable Long lessonId, @RequestBody LessonsDTO lessonDTO) {
         LessonsDTO updatedLesson = lessonsService.updateLesson(lessonId, lessonDTO);

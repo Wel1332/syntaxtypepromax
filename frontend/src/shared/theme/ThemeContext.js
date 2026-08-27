@@ -42,9 +42,12 @@ const buildTheme = (mode) =>
             h2: { fontFamily: '"Pixelify Sans", "DM Sans", sans-serif', fontWeight: 700, letterSpacing: '0.02em' },
             h3: { fontFamily: '"Pixelify Sans", "DM Sans", sans-serif', fontWeight: 700, letterSpacing: '0.02em' },
             h4: { fontFamily: '"Pixelify Sans", "DM Sans", sans-serif', fontWeight: 700 },
-            h5: { fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif', fontWeight: 700, fontVariantNumeric: 'tabular-nums' },
-            h6: { fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif', fontWeight: 700 },
-            overline: { fontFamily: 'Roboto, "Helvetica Neue", Arial, sans-serif', fontWeight: 700, letterSpacing: '0.08em' },
+            // DM Sans, not Roboto: Roboto is never loaded, so these three silently
+            // fell back to whatever sans the viewer's OS supplies — breaking the
+            // heading scale between h4 and h5. This matches the comment above.
+            h5: { fontFamily: '"DM Sans", sans-serif', fontWeight: 700, fontVariantNumeric: 'tabular-nums' },
+            h6: { fontFamily: '"DM Sans", sans-serif', fontWeight: 700 },
+            overline: { fontFamily: '"DM Sans", sans-serif', fontWeight: 700, letterSpacing: '0.08em' },
             button: { textTransform: 'none', fontWeight: 700 },
             body1: { fontWeight: 400 },
             body2: { fontWeight: 400 },

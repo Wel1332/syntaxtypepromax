@@ -270,7 +270,12 @@ public class UserService {
 
         User user = new User();
 
-        user.setUserId(userDTO.getUserId());
+        // The client's userId is deliberately not mapped. Every caller of this method is a
+        // create path, and a non-null ID makes Spring Data treat the entity as detached, so
+        // save() issues a merge (UPDATE) instead of an INSERT. Because /api/auth/register is
+        // public, mapping it let an unauthenticated request overwrite any existing account —
+        // including an admin — by posting that account's ID with fresh, non-colliding
+        // username and email values, which sail past the duplicate guards in AuthController.
         user.setUsername(userDTO.getUsername());
         user.setEmail(userDTO.getEmail());
 

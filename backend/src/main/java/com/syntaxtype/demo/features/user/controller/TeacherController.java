@@ -1,6 +1,8 @@
 package com.syntaxtype.demo.features.user.controller;
 
 import com.syntaxtype.demo.core.enums.Role;
+import com.syntaxtype.demo.core.security.AccessGuard;
+import com.syntaxtype.demo.core.security.CustomUserDetails;
 import com.syntaxtype.demo.features.user.dto.TeacherDTO;
 import com.syntaxtype.demo.features.user.entity.User;
 import com.syntaxtype.demo.features.user.service.TeacherService;
@@ -11,11 +13,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Reads here are staff-only already. The writes were not: they took a teacherId from the URL
+ * behind a role check that only proved the caller was *a* teacher, so any teacher could edit
+ * or delete any other teacher's profile. Every by-id write now verifies ownership.
+ */
 @RestController
 @RequestMapping("/api/teachers")
 @RequiredArgsConstructor
@@ -67,7 +75,12 @@ public class TeacherController {
 
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PostMapping
-    public ResponseEntity<TeacherDTO> createTeacher(@RequestBody TeacherDTO teacherDTO, @RequestParam Long userId) {
+    public ResponseEntity<TeacherDTO> createTeacher(
+            @RequestBody TeacherDTO teacherDTO,
+            @RequestParam Long userId,
+            @AuthenticationPrincipal CustomUserDetails caller) {
+        AccessGuard.requireSelfOrAdmin(userId, caller, "teacher profile");
+
         // Fetch the User entity using UserService
         Optional<User> userOptional = userService.findUserEntityById(userId);
 
@@ -77,7 +90,7 @@ public class TeacherController {
         }
 
         User user = userOptional.get();
-        
+
         // Check if the user's role is TEACHER
         if (user.getUserRole() != Role.TEACHER) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // Or HttpStatus.FORBIDDEN
@@ -88,7 +101,11 @@ public class TeacherController {
 
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PatchMapping("/{teacherId}/first-name")
-    public ResponseEntity<TeacherDTO> updateFirstName(@PathVariable Long teacherId, @RequestParam String newFirstName) {
+    public ResponseEntity<TeacherDTO> updateFirstName(
+            @PathVariable Long teacherId,
+            @RequestParam String newFirstName,
+            @AuthenticationPrincipal CustomUserDetails caller) {
+        AccessGuard.requireSelfOrAdmin(teacherId, caller, "teacher profile");
         TeacherDTO updated = teacherService.updateFirstName(teacherId, newFirstName);
         if (updated != null) {
             return ResponseEntity.ok(updated);
@@ -98,7 +115,11 @@ public class TeacherController {
 
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PatchMapping("/{teacherId}/last-name")
-    public ResponseEntity<TeacherDTO> updateLastName(@PathVariable Long teacherId, @RequestParam String newLastName) {
+    public ResponseEntity<TeacherDTO> updateLastName(
+            @PathVariable Long teacherId,
+            @RequestParam String newLastName,
+            @AuthenticationPrincipal CustomUserDetails caller) {
+        AccessGuard.requireSelfOrAdmin(teacherId, caller, "teacher profile");
         TeacherDTO updated = teacherService.updateLastName(teacherId, newLastName);
         if (updated != null) {
             return ResponseEntity.ok(updated);
@@ -108,7 +129,11 @@ public class TeacherController {
 
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PatchMapping("/{teacherId}/institution")
-    public ResponseEntity<TeacherDTO> updateInstitution(@PathVariable Long teacherId, @RequestParam String newInstitution) {
+    public ResponseEntity<TeacherDTO> updateInstitution(
+            @PathVariable Long teacherId,
+            @RequestParam String newInstitution,
+            @AuthenticationPrincipal CustomUserDetails caller) {
+        AccessGuard.requireSelfOrAdmin(teacherId, caller, "teacher profile");
         TeacherDTO updated = teacherService.updateInstitution(teacherId, newInstitution);
         if (updated != null) {
             return ResponseEntity.ok(updated);
@@ -118,7 +143,11 @@ public class TeacherController {
 
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @PatchMapping("/{teacherId}/subject")
-    public ResponseEntity<TeacherDTO> updateSubject(@PathVariable Long teacherId, @RequestParam String newSubject) {
+    public ResponseEntity<TeacherDTO> updateSubject(
+            @PathVariable Long teacherId,
+            @RequestParam String newSubject,
+            @AuthenticationPrincipal CustomUserDetails caller) {
+        AccessGuard.requireSelfOrAdmin(teacherId, caller, "teacher profile");
         TeacherDTO updated = teacherService.updateSubject(teacherId, newSubject);
         if (updated != null) {
             return ResponseEntity.ok(updated);
@@ -128,8 +157,12 @@ public class TeacherController {
 
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @DeleteMapping("/{teacherId}")
-    public ResponseEntity<Void> deleteTeacher(@PathVariable Long teacherId) {
+    public ResponseEntity<Void> deleteTeacher(
+            @PathVariable Long teacherId,
+            @AuthenticationPrincipal CustomUserDetails caller) {
+        AccessGuard.requireSelfOrAdmin(teacherId, caller, "teacher profile");
         teacherService.deleteById(teacherId);
         return ResponseEntity.noContent().build();
     }
+
 }

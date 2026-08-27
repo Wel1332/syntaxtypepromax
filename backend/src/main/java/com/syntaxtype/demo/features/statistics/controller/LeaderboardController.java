@@ -128,7 +128,7 @@ public class LeaderboardController {
         return ResponseEntity.ok(leaderboardService.findByCategory(category));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<LeaderboardDTO> createLeaderboard(@RequestBody LeaderboardDTO leaderboardDTO, @RequestParam Long userId) {
         User user = new User();
@@ -136,7 +136,7 @@ public class LeaderboardController {
         return ResponseEntity.ok(leaderboardService.save(leaderboardDTO, user));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{leaderboardId}/words-per-minute")
     public ResponseEntity<LeaderboardDTO> updateWordsPerMinute(@PathVariable Long leaderboardId, @RequestParam Integer newWpm) {
         LeaderboardDTO updated = leaderboardService.updateWordsPerMinute(leaderboardId, newWpm);
@@ -146,7 +146,7 @@ public class LeaderboardController {
         return ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{leaderboardId}/accuracy")
     public ResponseEntity<LeaderboardDTO> updateAccuracy(@PathVariable Long leaderboardId, @RequestParam Integer newAccuracy) {
         LeaderboardDTO updated = leaderboardService.updateAccuracy(leaderboardId, newAccuracy);
@@ -156,7 +156,7 @@ public class LeaderboardController {
         return ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{leaderboardId}/total-words-typed")
     public ResponseEntity<LeaderboardDTO> updateTotalWordsTyped(@PathVariable Long leaderboardId, @RequestParam Integer newTotalWordsTyped) {
         LeaderboardDTO updated = leaderboardService.updateTotalWordsTyped(leaderboardId, newTotalWordsTyped);
@@ -166,7 +166,7 @@ public class LeaderboardController {
         return ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{leaderboardId}/total-time-spent")
     public ResponseEntity<LeaderboardDTO> updateTotalTimeSpent(@PathVariable Long leaderboardId, @RequestParam Integer newTotalTimeSpent) {
         LeaderboardDTO updated = leaderboardService.updateTotalTimeSpent(leaderboardId, newTotalTimeSpent);
@@ -176,7 +176,7 @@ public class LeaderboardController {
         return ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{leaderboardId}/category")
     public ResponseEntity<LeaderboardDTO> updateCategory(@PathVariable Long leaderboardId, @RequestParam Category newCategory) {
         LeaderboardDTO updated = leaderboardService.updateCategory(leaderboardId, newCategory);
@@ -186,7 +186,7 @@ public class LeaderboardController {
         return ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         leaderboardService.deleteById(id);

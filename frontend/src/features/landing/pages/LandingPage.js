@@ -86,7 +86,9 @@ const LandingPage = () => {
         let cancelled = false;
         const fetchTop = async () => {
             try {
-                const res = await fetch(`${API_BASE}/api/leaderboards/global/all`);
+                // /global, not /global/all — the latter has never existed on the backend, so
+                // this returned 404 and the card showed its error state on every visit.
+                const res = await fetch(`${API_BASE}/api/leaderboards/global`);
                 if (!res.ok) throw new Error('bad status');
                 const data = await res.json();
                 if (cancelled) return;

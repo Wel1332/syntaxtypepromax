@@ -23,5 +23,9 @@ public enum Category {
     // pre/post assessment data.
     SYNTAX_SAVER_LESSON,
     CHALLENGES,
+    // Logic Puzzles — read-and-reason challenges over C constructs (Objective
+    // 5.2). Submissions carry no modeType and report wpm 0: nothing is typed, so
+    // a WPM figure here would pollute the typing statistics the study measures.
+    LOGIC_PUZZLES,
     OVERALL
 }

@@ -4,6 +4,7 @@ import { API_BASE } from "../../../shared/api/client";
 import { authFetch } from "../../../shared/api/authFetch";
 import { useScoreSubmission } from "../../../shared/hooks/useScoreSubmission";
 import { buildChallengeForMode } from "../data/fallingBanks";
+import { bugInjectionChance, getBugInjectionConfig } from "../data/bugInjectionConfig";
 import ModePickerCard from "../../../shared/assessment/ModePickerCard";
 import {
     MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
@@ -414,8 +415,10 @@ const FallingTypingTest = () => {
     // ─── Spawn logic ──────────────────────────────────────────────────────────
     // Bug Bash phase: bug words don't start dropping until the player has caught
     // a few correct words. The probability ramps up after the threshold so the
-    // game feels progressively harder.
-    const BUG_PHASE_THRESHOLD = 5;
+    // game feels progressively harder. Both the threshold and the 15-40% rate
+    // band live in bugInjectionConfig so they can be tuned without editing this
+    // component — see Objective 1.1.
+    const BUG_PHASE_THRESHOLD = getBugInjectionConfig().unlockAfterWords;
 
     // Elapsed-time progress in [0, 1] — used to ramp difficulty.
     const getProgress = () => {
@@ -429,9 +432,7 @@ const FallingTypingTest = () => {
 
         const caught = wordsCaughtRef.current;
         const bugPhaseUnlocked = caught >= BUG_PHASE_THRESHOLD;
-        const wrongChance = bugPhaseUnlocked
-            ? Math.min(0.30, 0.15 + (caught - BUG_PHASE_THRESHOLD) * 0.008)
-            : 0;
+        const wrongChance = bugInjectionChance(caught);
 
         if (bugPhaseUnlocked && !bugPhaseStartedRef.current && pools.wrong.length > 0) {
             bugPhaseStartedRef.current = true;

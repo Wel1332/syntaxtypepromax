@@ -222,6 +222,62 @@ class AuthorizationBoundaryTest {
     }
 
     @Nested
+    @DisplayName("Game content is readable by players but writable only by staff")
+    class GameContentAuthoring {
+
+        @Test
+        void studentCanLoadDrillsForTheirRound() throws Exception {
+            // The games fetch their content through this endpoint, so a student
+            // must be able to read it or every round falls back to built-ins.
+            assertNotForbidden(get("/api/game-content")
+                    .param("game", "SNIPER").param("bank", "PRACTICE")
+                    .with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void studentCannotAuthorADrill() throws Exception {
+            assertForbidden(post("/api/game-content")
+                    .contentType("application/json")
+                    .content("{\"game\":\"SNIPER\",\"bank\":\"TEST\",\"itemType\":\"DRILL\",\"payload\":\"{}\"}")
+                    .with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void studentCannotEditAnExistingDrill() throws Exception {
+            assertForbidden(put("/api/game-content/1")
+                    .contentType("application/json")
+                    .content("{\"game\":\"SNIPER\",\"bank\":\"TEST\",\"itemType\":\"DRILL\",\"payload\":\"{}\"}")
+                    .with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void studentCannotRemoveADrill() throws Exception {
+            assertForbidden(delete("/api/game-content/1").with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void studentCannotBulkImportContent() throws Exception {
+            assertForbidden(post("/api/game-content/import")
+                    .contentType("application/json").content("[]")
+                    .with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void studentCannotListDeactivatedContent() throws Exception {
+            assertForbidden(get("/api/game-content/manage")
+                    .param("game", "SNIPER")
+                    .with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void teacherCanAuthor() throws Exception {
+            assertNotForbidden(get("/api/game-content/manage")
+                    .param("game", "SNIPER")
+                    .with(as(ALICE, Role.TEACHER)));
+        }
+    }
+
+    @Nested
     @DisplayName("Controllers that previously carried no authorization at all")
     class PreviouslyUnguarded {
 

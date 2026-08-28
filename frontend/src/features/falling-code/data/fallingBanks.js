@@ -122,9 +122,21 @@ export const testBank = {
 
 // Convenience: assemble a challenge-shaped object the existing game accepts.
 // `mode` is one of MODE.PRE_TEST / PRACTICE / POST_TEST.
-export const buildChallengeForMode = (mode) => {
+//
+// `overrides` lets faculty-authored content replace individual pools without the
+// caller having to rebuild the whole challenge (Objective 4.2). Any pool left
+// undefined keeps its built-in bank, so a teacher who has only written new bug
+// templates does not lose the word and code-line pools with them.
+export const buildChallengeForMode = (mode, overrides = {}) => {
     const isPractice = mode === "PRACTICE";
-    const bank = isPractice ? practiceBank : testBank;
+    const base = isPractice ? practiceBank : testBank;
+    const bank = {
+        words:          overrides.words          ?? base.words,
+        wrongWords:     overrides.wrongWords     ?? base.wrongWords,
+        codeLines:      overrides.codeLines      ?? base.codeLines,
+        buggyLines:     overrides.buggyLines     ?? base.buggyLines,
+        sequenceBlocks: overrides.sequenceBlocks ?? base.sequenceBlocks,
+    };
     return {
         challengeId: `__${mode.toLowerCase()}__`,
         id:          `__${mode.toLowerCase()}__`,

@@ -9,6 +9,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { practiceBank, testBank } from "../data/syntaxSniperDrills";
+import { useGameBanks } from "../../../shared/api/useGameBanks";
 import ModePickerCard from "../../../shared/assessment/ModePickerCard";
 import {
     MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
@@ -37,8 +38,10 @@ const shuffled = (arr) => {
     return out;
 };
 
-const buildSession = (mode) => {
-    const bank = mode === MODE.PRACTICE ? practiceBank : testBank;
+// `banks` comes from useGameBanks: faculty-authored drills when the database
+// holds a full bank, the built-in bank otherwise (Objective 4.2).
+const buildSession = (mode, banks) => {
+    const bank = mode === MODE.PRACTICE ? banks.practice : banks.test;
     const deck = shuffled(bank).slice(0, Math.min(SESSION_LENGTH, bank.length));
     return deck;
 };
@@ -82,6 +85,12 @@ export default function SyntaxSniper() {
     const drill = session[drillIdx];
     const segments = useMemo(() => (drill ? buildSegments(drill) : []), [drill]);
 
+    // Faculty-authored drills when the database holds a full bank, the built-in
+    // bank otherwise (Objective 4.2). Returns the built-in bank synchronously on
+    // first render, so a session started before the fetch resolves is still a
+    // real one rather than an empty deck recorded as a score.
+    const banks = useGameBanks("SNIPER", "DRILL", practiceBank, testBank, SESSION_LENGTH);
+
     const activeRef = useRef(active);
     const filledRef = useRef(filled);
     const viewRef = useRef(view);
@@ -110,7 +119,7 @@ export default function SyntaxSniper() {
     const onPickMode = (m) => {
         if (!canStartMode(GAME.SNIPER, m)) return;
         setMode(m);
-        const deck = buildSession(m);
+        const deck = buildSession(m, banks);
         setSession(deck);
         setScore(0);
         setMisses(0);
@@ -133,7 +142,7 @@ export default function SyntaxSniper() {
 
     const restart = () => {
         if (!mode) return;
-        const deck = buildSession(mode);
+        const deck = buildSession(mode, banks);
         setSession(deck);
         setScore(0);
         setMisses(0);

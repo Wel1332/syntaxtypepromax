@@ -13,6 +13,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { practiceBank, testBank, enemies } from "../data/translationPrompts";
+import { useGameBanks } from "../../../shared/api/useGameBanks";
 import { tokensEqual } from "../../../shared/utils/codeCompare";
 import ModePickerCard from "../../../shared/assessment/ModePickerCard";
 import { useScoreSubmission } from "../../../shared/hooks/useScoreSubmission";
@@ -75,7 +76,12 @@ export default function TranslationTerminal() {
     useEffect(() => { recordedRef.current = recorded; }, [recorded]);
 
     const enemy = enemies[enemyIdx];
-    const bank = mode === MODE.PRACTICE ? practiceBank : testBank;
+
+    // Faculty-authored prompts when the database holds a full bank, the built-in
+    // bank otherwise (Objective 4.2). Never empty, even while the fetch is in
+    // flight — an empty round would be recorded as a real score.
+    const banks = useGameBanks("TRANSLATION", "PROMPT", practiceBank, testBank, 10);
+    const bank = mode === MODE.PRACTICE ? banks.practice : banks.test;
 
     // Practice lets the student choose their opponent (difficulty). Pre-Test and
     // Post-Test are standardized assessments — everyone faces the same sequence

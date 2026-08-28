@@ -39,6 +39,8 @@ import AllLessonsView from '../features/lessons/pages/AllLessonsView';
 
 import AdminManageUsers from '../features/admin/pages/AdminManageUsers';
 import SyntaxSniper from '../features/syntax-sniper/pages/SyntaxSniper';
+import ContentManager from '../features/teacher/pages/ContentManager';
+import LogicPuzzles from '../features/logic-puzzles/pages/LogicPuzzles';
 import Game from '../features/galaxy/pages/Game';
 import GalaxyMainGame from '../features/galaxy/pages/GalaxyMainGame';
 import GalaxyChallengeList from '../features/galaxy/pages/GalaxyChallengeList';
@@ -101,6 +103,7 @@ export const routes = [
   // Protected — staff
   { path: '/teacher/class',          element: <TeacherClassDashboard />,  kind: 'protected', roles: STAFF },
   { path: '/teacher/classes',        element: <TeacherClasses />,         kind: 'protected', roles: STAFF },
+  { path: '/teacher/content',        element: <ContentManager />,         kind: 'protected', roles: STAFF },
   { path: '/instructor',             element: <InstructorModule />,       kind: 'protected', roles: STAFF },
   { path: '/challenges',             element: <ChallengePage />,          kind: 'protected', roles: STAFF },
   { path: '/lesson',                 element: <CreateLessonModule />,     kind: 'protected', roles: STAFF },
@@ -110,6 +113,7 @@ export const routes = [
   { path: '/typingtest',             element: <TypingTest />,             kind: 'protected', roles: PLAYERS },
   { path: '/syntax-sniper',          element: <SyntaxSniper />,           kind: 'protected', roles: PLAYERS },
   { path: '/translation-terminal',   element: <TranslationTerminal />,    kind: 'protected', roles: PLAYERS },
+  { path: '/logic-puzzles',          element: <LogicPuzzles />,           kind: 'protected', roles: PLAYERS },
   { path: '/fallingtypingtest',      element: <FallingTypingTest />,      kind: 'protected', roles: PLAYERS },
   { path: '/galaxy',                 element: <Game />,                   kind: 'protected', roles: PLAYERS },
   { path: '/galaxy-new',             element: <GalaxyChallengeList />,    kind: 'protected', roles: PLAYERS },

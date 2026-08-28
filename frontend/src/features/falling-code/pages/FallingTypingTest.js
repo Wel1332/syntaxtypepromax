@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../../../shared/api/client";
 import { authFetch } from "../../../shared/api/authFetch";
 import { useScoreSubmission } from "../../../shared/hooks/useScoreSubmission";
-import { buildChallengeForMode } from "../data/fallingBanks";
+import { buildChallengeForMode, practiceBank, testBank } from "../data/fallingBanks";
 import { bugInjectionChance, getBugInjectionConfig } from "../data/bugInjectionConfig";
+import { useGameBanks } from "../../../shared/api/useGameBanks";
 import ModePickerCard from "../../../shared/assessment/ModePickerCard";
 import {
     MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
@@ -277,13 +278,27 @@ const FallingTypingTest = () => {
         setTimeout(() => hiddenInputRef.current?.focus(), 50);
     };
 
+    // Faculty-authored bug templates, falling back to the built-in ones
+    // (Objective 4.2). Only the buggyLines pool is authorable — the word and
+    // code-line pools drive typing speed rather than error detection, so leaving
+    // them fixed keeps the Bug Smasher measure comparable across participants
+    // even if a teacher edits the templates mid-study.
+    const bugTemplates = useGameBanks(
+        "FALLING", "BUGGY_LINE", practiceBank.buggyLines, testBank.buggyLines, 4);
+    const authoredBugTemplates = (m) =>
+        (m === "PRACTICE" ? bugTemplates.practice : bugTemplates.test);
+
     // Mode picker → either drop into the default mode-built challenge (the
     // common case) or open the challenge browser so the student can pick from
     // teacher-authored challenges in the chosen mode.
     const onPickMode = (m) => {
         if (!canStartMode(GAME.FALLING, m)) return;
         setMode(m);
-        startChallenge(buildChallengeForMode(m));
+        // Faculty-authored bug templates replace the built-in ones when the
+        // database holds them; every other pool keeps its built-in bank.
+        startChallenge(buildChallengeForMode(m, {
+            buggyLines: authoredBugTemplates(m),
+        }));
     };
     const openChallengePicker = (m) => {
         if (!canStartMode(GAME.FALLING, m)) return;

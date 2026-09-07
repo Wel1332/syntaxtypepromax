@@ -1,7 +1,10 @@
 package com.syntaxtype.demo.features.statistics.controller;
 
+import com.syntaxtype.demo.features.lesson.entity.DrillAttempt;
 import com.syntaxtype.demo.features.lesson.entity.Score;
+import com.syntaxtype.demo.features.lesson.repository.DrillAttemptRepository;
 import com.syntaxtype.demo.features.lesson.repository.ScoreRepository;
+import com.syntaxtype.demo.features.user.entity.User;
 import com.syntaxtype.demo.features.statistics.dto.AnalyticsProgressDTO;
 import com.syntaxtype.demo.features.statistics.entity.StudentAchievements;
 import com.syntaxtype.demo.features.statistics.entity.UserStatistics;
@@ -34,6 +37,7 @@ public class AnalyticsController {
     private final StudentRepository studentRepository;
     private final UserStatisticsRepository userStatisticsRepository;
     private final ScoreRepository scoreRepository;
+    private final DrillAttemptRepository drillAttemptRepository;
     private final StudentAchievementsRepository studentAchievementsRepository;
 
     // Games whose objectives are measured via pre/post assessment.
@@ -136,6 +140,63 @@ public class AnalyticsController {
         }
 
         return csvResponse(csv.toString(), "progress_pre_post.csv");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Per-drill detail (Objective 2.3)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * GET /api/analytics/drills.csv
+     *
+     * One row per drill attempted, rather than one row per session. This is what
+     * makes the error distribution in Objective 2.3 recoverable: grouping the
+     * rows by Topic or Error Category gives where students go wrong, and Time
+     * (ms) gives the per-drill completion time the aggregate never stored.
+     *
+     * Rows only exist for sessions whose game sent per-drill detail, so a cohort
+     * that played before this shipped exports as an empty body with headers —
+     * deliberately, because inventing rows from the session aggregate would put
+     * fabricated per-drill figures into the study data.
+     */
+    @GetMapping("/drills.csv")
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> drillsCsv() {
+        List<DrillAttempt> attempts = drillAttemptRepository.findAllWithSessionAndUser();
+
+        Map<Long, Student> studentsById = studentRepository.findAll().stream()
+                .filter(s -> s.getUser() != null)
+                .collect(Collectors.toMap(s -> s.getUser().getUserId(), s -> s, (a, b) -> a));
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Game,Name,Username,Section,Mode,Session,Submitted At,"
+                + "Position,Drill Id,Topic,Difficulty,Cleared,Time (ms),Misses,Error Category\n");
+
+        for (DrillAttempt d : attempts) {
+            Score s = d.getScore();
+            User u = s.getUser();
+            Long uid = u != null ? u.getUserId() : null;
+            Student st = uid != null ? studentsById.get(uid) : null;
+
+            csv.append(csv(GAME_LABELS.getOrDefault(s.getChallengeType(), s.getChallengeType()))).append(',');
+            csv.append(csv(st != null ? st.getFirstName() + " " + st.getLastName() : "")).append(',');
+            csv.append(csv(u != null ? u.getUsername() : "")).append(',');
+            csv.append(csv(st != null ? st.getSection() : "")).append(',');
+            csv.append(csv(s.getModeType() != null ? s.getModeType() : "")).append(',');
+            csv.append(s.getId()).append(',');
+            csv.append(csv(s.getSubmittedAt() != null ? s.getSubmittedAt().toString() : "")).append(',');
+            csv.append(d.getPosition()).append(',');
+            csv.append(csv(d.getItemId())).append(',');
+            csv.append(csv(d.getTopic())).append(',');
+            csv.append(csv(d.getDifficulty())).append(',');
+            csv.append(d.isCleared() ? "yes" : "no").append(',');
+            csv.append(d.getTimeMs()).append(',');
+            csv.append(d.getMisses()).append(',');
+            csv.append(csv(d.getErrorCategory())).append('\n');
+        }
+
+        return csvResponse(csv.toString(), "drill_attempts.csv");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

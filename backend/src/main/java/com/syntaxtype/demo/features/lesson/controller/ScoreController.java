@@ -5,8 +5,11 @@ import com.syntaxtype.demo.features.statistics.dto.LeaderboardUpdateResult;
 import com.syntaxtype.demo.features.statistics.dto.ScoreSubmissionRequest;
 import com.syntaxtype.demo.core.enums.Category;
 import com.syntaxtype.demo.core.security.CustomUserDetails;
+import com.syntaxtype.demo.features.lesson.repository.DrillAttemptRepository;
 import com.syntaxtype.demo.features.lesson.repository.ScoreRepository;
 import com.syntaxtype.demo.features.lesson.service.ScoreService;
+import com.syntaxtype.demo.features.lesson.entity.DrillAttempt;
+import com.syntaxtype.demo.features.statistics.dto.DrillAttemptRequest;
 import com.syntaxtype.demo.features.statistics.service.AchievementEvaluatorService;
 import com.syntaxtype.demo.features.statistics.service.LeaderboardService;
 import com.syntaxtype.demo.features.statistics.service.UserStatisticsService;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import com.syntaxtype.demo.features.lesson.entity.Score;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,8 +32,17 @@ import java.util.Optional;
 @RequestMapping("/api/scores")
 public class ScoreController {
 
+    /**
+     * Upper bound on per-drill rows accepted in one submission (Objective 2.3).
+     * A session is six drills; the ceiling is generous enough for any future
+     * bank and low enough that a crafted request cannot write unbounded rows
+     * into the table the study reads.
+     */
+    private static final int MAX_DRILLS_PER_SUBMISSION = 200;
+
     private final ScoreService scoreService;
     private final ScoreRepository scoreRepository;
+    private final DrillAttemptRepository drillAttemptRepository;
     private final LeaderboardService leaderboardService;
     private final UserStatisticsService userStatisticsService;
     private final AchievementEvaluatorService achievementEvaluatorService;
@@ -37,12 +50,14 @@ public class ScoreController {
 
     public ScoreController(ScoreService scoreService,
                            ScoreRepository scoreRepository,
+                           DrillAttemptRepository drillAttemptRepository,
                            LeaderboardService leaderboardService,
                            UserStatisticsService userStatisticsService,
                            AchievementEvaluatorService achievementEvaluatorService,
                            UserRepository userRepository) {
         this.scoreService = scoreService;
         this.scoreRepository = scoreRepository;
+        this.drillAttemptRepository = drillAttemptRepository;
         this.leaderboardService = leaderboardService;
         this.userStatisticsService = userStatisticsService;
         this.achievementEvaluatorService = achievementEvaluatorService;
@@ -144,7 +159,11 @@ public class ScoreController {
         score.setErrorCount(errors);
         score.setSubmittedAt(LocalDateTime.now());
         score.setUser(user);
-        scoreService.saveScore(score);
+        Score savedScore = scoreService.saveScore(score);
+
+        // Per-drill detail, when the game sends it (Objective 2.3). Persisted
+        // after the session so the rows can point at a Score that has an id.
+        saveDrillAttempts(savedScore, request.getDrills());
 
         // Update leaderboard if better — but never for PRACTICE plays. Practice
         // is unlimited training and is documented as keeping no leaderboard
@@ -168,6 +187,41 @@ public class ScoreController {
         result.setAwardedBadges(badges);
 
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Stores the per-drill rows for a session (Objective 2.3).
+     *
+     * Silently does nothing when the client sends no drills — that is the normal
+     * path for the game modes that only report a session aggregate, not an error
+     * condition. Position is assigned from list order rather than trusted from
+     * the client, so two drills cannot claim the same slot in the session.
+     */
+    private void saveDrillAttempts(Score session, List<DrillAttemptRequest> drills) {
+        if (drills == null || drills.isEmpty()) return;
+
+        List<DrillAttemptRequest> accepted = drills.size() > MAX_DRILLS_PER_SUBMISSION
+                ? drills.subList(0, MAX_DRILLS_PER_SUBMISSION)
+                : drills;
+
+        List<DrillAttempt> rows = new ArrayList<>(accepted.size());
+        int position = 1;
+        for (DrillAttemptRequest d : accepted) {
+            DrillAttempt row = new DrillAttempt();
+            row.setScore(session);
+            row.setPosition(position++);
+            row.setItemId(d.getItemId());
+            row.setTopic(d.getTopic());
+            row.setDifficulty(d.getDifficulty());
+            row.setCleared(Boolean.TRUE.equals(d.getCleared()));
+            row.setTimeMs(Math.max(0, Optional.ofNullable(d.getTimeMs()).orElse(0)));
+            row.setMisses(Math.max(0, Optional.ofNullable(d.getMisses()).orElse(0)));
+            // A cleared drill has no error to categorise; dropping the category
+            // here keeps the error distribution from counting successes.
+            row.setErrorCategory(row.isCleared() ? null : d.getErrorCategory());
+            rows.add(row);
+        }
+        drillAttemptRepository.saveAll(rows);
     }
 
 

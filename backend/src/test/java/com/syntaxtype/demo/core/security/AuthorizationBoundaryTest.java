@@ -186,6 +186,17 @@ class AuthorizationBoundaryTest {
                     .with(as(ALICE, Role.STUDENT)));
         }
 
+        @Test
+        void studentCannotExportEveryonesPerDrillDetail() throws Exception {
+            // The per-drill export carries every participant's name, section and
+            // miss pattern — a cohort-wide research dataset, not the caller's own.
+            assertForbidden(get("/api/analytics/drills.csv").with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void teacherCanExportPerDrillDetail() throws Exception {
+            assertNotForbidden(get("/api/analytics/drills.csv").with(as(ALICE, Role.TEACHER)));
+        }
     }
 
     @Nested

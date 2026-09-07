@@ -63,6 +63,23 @@ function buildSegments(drill) {
     return segs;
 }
 
+// Names the punctuation token a missed drill was stuck on (Objective 2.3).
+// The blank the player never filled is the error, so the expected character
+// there classifies it — this is what turns per-drill rows into the punctuation
+// error distribution the objective asks for ("semicolons are missed twice as
+// often as commas"), rather than an undifferentiated count of failures.
+const TOKEN_CATEGORY = {
+    ";": "missing-semicolon",
+    ",": "missing-comma",
+    "{": "missing-brace",
+    "}": "missing-brace",
+    "(": "missing-parenthesis",
+    ")": "missing-parenthesis",
+};
+
+const classifyMiss = (expectedChar) =>
+    expectedChar == null ? null : (TOKEN_CATEGORY[expectedChar] ?? "missing-token");
+
 export default function SyntaxSniper() {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
@@ -111,6 +128,14 @@ export default function SyntaxSniper() {
     const scoreRef = useRef(score);
     const completedDrillsRef = useRef(completedDrills);
     const missesRef = useRef(misses);
+
+    // Per-drill log for Objective 2.3. Kept in refs, not state, for the same
+    // reason as the four above: advanceDrill and finalise are reached from the
+    // keyboard handler's stale closure, and a state value read there would be
+    // the initial one — which would silently log an empty session.
+    const drillLogRef = useRef([]);
+    const drillStartRef = useRef(0);
+    const drillMissesRef = useRef(0);
     useEffect(() => { modeRef.current = mode; }, [mode]);
     useEffect(() => { scoreRef.current = score; }, [score]);
     useEffect(() => { completedDrillsRef.current = completedDrills; }, [completedDrills]);
@@ -124,6 +149,7 @@ export default function SyntaxSniper() {
         setScore(0);
         setMisses(0);
         setCompletedDrills(0);
+        drillLogRef.current = [];
         startDrillIn(deck, 0);
     };
 
@@ -138,6 +164,10 @@ export default function SyntaxSniper() {
         setActive(0);
         setTimeLeft(PER_DRILL_SECONDS);
         setView("playing");
+        // Completion time is measured from the drill appearing, not from the
+        // first keystroke, so time spent reading counts toward it.
+        drillStartRef.current = Date.now();
+        drillMissesRef.current = 0;
     };
 
     const restart = () => {
@@ -147,6 +177,7 @@ export default function SyntaxSniper() {
         setScore(0);
         setMisses(0);
         setCompletedDrills(0);
+        drillLogRef.current = [];
         startDrillIn(deck, 0);
     };
 
@@ -199,6 +230,7 @@ export default function SyntaxSniper() {
                 }
             } else {
                 setMisses((m) => m + 1);
+                drillMissesRef.current += 1;
                 setTimeLeft((t) => Math.max(0, t - 0.5));
                 setShake(true);
                 setTimeout(() => setShake(false), 180);
@@ -217,6 +249,21 @@ export default function SyntaxSniper() {
             earned = 50 + Math.round(tNow * 5);
             setScore((s) => s + earned);
         }
+
+        // Record this drill before moving on (Objective 2.3). A missed drill is
+        // classified by the blank the player was still on when time ran out.
+        const played = sessionRef.current[drillIdxRef.current];
+        if (played) {
+            drillLogRef.current.push({
+                itemId: played.id ?? null,
+                difficulty: played.difficulty ?? null,
+                cleared,
+                timeMs: Math.max(0, Date.now() - drillStartRef.current),
+                misses: drillMissesRef.current,
+                errorCategory: cleared ? null : classifyMiss(played.answers[activeRef.current]),
+            });
+        }
+
         const nextIdx = drillIdxRef.current + 1;
         if (nextIdx >= sessionRef.current.length) {
             finalise(earned);
@@ -257,6 +304,7 @@ export default function SyntaxSniper() {
             correctCount: drillsCleared,       // drills cleared correctly
             totalCount: sessionRef.current.length, // drills presented
             errorCount: missesRef.current,     // wrong keystrokes
+            drills: drillLogRef.current,       // per-drill detail (Objective 2.3)
         });
         setView("done");
     };

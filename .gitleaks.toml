@@ -54,3 +54,23 @@ paths = [
     '''(^|/)node_modules/''',
     '''(^|/)target/''',
 ]
+
+# The test profile has to give jwt.secret and admin.password literal values:
+# they are read at context startup, and leaving them as bare ${ENV_VAR} would
+# make the suite unrunnable without a developer's local secret.properties —
+# which is what kept it out of CI. They are throwaway strings for an in-memory
+# H2 database that exists only for the length of a test run.
+#
+# Allowlisted by value prefix rather than by file path, deliberately. Exempting
+# application-test.properties wholesale would let a genuine credential be added
+# to that file later without a word from the hook; requiring the "test-only-"
+# prefix keeps every other value in it under the same scrutiny as production.
+#
+# regexTarget = "line" is required: the rules above capture the property name,
+# so gitleaks reports "jwt.secret" as the secret and an allowlist regex would be
+# tested against that rather than against the value. Matching the whole line is
+# what lets the prefix do its job.
+regexTarget = "line"
+regexes = [
+    '''(jwt\.secret|admin\.password)[ \t]*=[ \t]*test-only-[A-Za-z0-9._-]+''',
+]

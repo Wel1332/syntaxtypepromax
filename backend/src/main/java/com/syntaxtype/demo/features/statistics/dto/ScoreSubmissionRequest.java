@@ -53,4 +53,15 @@ public class ScoreSubmissionRequest {
     private Integer correctCount;
     private Integer totalCount;
     private Integer errorCount;
+
+    /**
+     * Per-drill detail for this session, in the order presented (Objective 2.3).
+     *
+     * Optional. Omitting it stores the session aggregate exactly as before, which
+     * is what the game modes that do not yet track per-drill data still do. When
+     * present, each entry becomes one drill_attempts row so accuracy, completion
+     * time and error distribution stay recoverable per drill instead of only per
+     * session.
+     */
+    private java.util.List<DrillAttemptRequest> drills;
 }

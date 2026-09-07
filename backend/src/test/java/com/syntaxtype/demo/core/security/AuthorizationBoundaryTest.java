@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
@@ -37,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class AuthorizationBoundaryTest {
 
     private static final long ALICE = 101L;   // the caller
@@ -182,6 +184,18 @@ class AuthorizationBoundaryTest {
             assertForbidden(patch("/api/lesson-attempts/1/wpm")
                     .param("newWpm", "999")
                     .with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void studentCannotExportEveryonesPerDrillDetail() throws Exception {
+            // The per-drill export carries every participant's name, section and
+            // miss pattern — a cohort-wide research dataset, not the caller's own.
+            assertForbidden(get("/api/analytics/drills.csv").with(as(ALICE, Role.STUDENT)));
+        }
+
+        @Test
+        void teacherCanExportPerDrillDetail() throws Exception {
+            assertNotForbidden(get("/api/analytics/drills.csv").with(as(ALICE, Role.TEACHER)));
         }
     }
 

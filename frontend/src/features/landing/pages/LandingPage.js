@@ -12,54 +12,98 @@ import ExtensionIcon from '@mui/icons-material/Extension';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import { useThemeMode } from '../../../shared/theme/ThemeContext';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
 
 // ── Tokens ────────────────────────────────────────────────────────────────────
-// The landing page paints its own surface rather than reading the MUI palette.
-// It is the one screen that must look identical to a visitor who has never
-// opened the app and therefore has the default light theme set.
-const C = {
-    ink: '#0B0714',
-    inkSoft: '#100A1C',
-    band: '#150E26',
-    panel: '#171029',
-    panelHi: '#1E1434',
-    console: '#080116',
-    line: 'rgba(255,255,255,0.08)',
-    lineHi: 'rgba(255,255,255,0.16)',
-    text: '#F4EFFF',
-    dim: '#9C90B8',
+// The page paints its own surfaces rather than reading the MUI palette, because
+// its treatment differs from the app chrome, but it follows the same light/dark
+// choice so the theme toggle in its header is not a control that does nothing.
+//
+// Brand hues are deliberately shared by both modes: pink, gold, cyan and violet
+// all hold up on either ground, and letting them drift would give the landing
+// page a second identity.
+const BRAND = {
     pink: '#FF3D82',
     pinkDeep: '#C8456D',
     gold: '#FFC700',
     cyan: '#3ED0E0',
     violet: '#9A6BFF',
+    // The console is a terminal, so it stays dark in both modes -- as terminals
+    // do inside light IDEs -- and keeps a light hairline of its own, since a
+    // dark border would vanish against it.
+    console: '#080116',
+    consoleLine: 'rgba(255,255,255,0.16)',
+    consoleLineSoft: 'rgba(255,255,255,0.08)',
+    consoleDim: '#9C90B8',
+    consoleText: '#F4EFFF',
+};
+
+const SURFACES = {
+    dark: {
+        ink: '#0B0714',
+        inkSoft: '#100A1C',
+        band: '#150E26',
+        panel: '#171029',
+        panelHi: '#1E1434',
+        line: 'rgba(255,255,255,0.08)',
+        lineHi: 'rgba(255,255,255,0.16)',
+        text: '#F4EFFF',
+        dim: '#9C90B8',
+        goldInk: '#FFC700',
+        wash: 'radial-gradient(760px 380px at 78% 8%, rgba(255,61,130,0.16), transparent 70%), radial-gradient(620px 340px at 8% 30%, rgba(154,107,255,0.12), transparent 70%)',
+        ctaFill: 'linear-gradient(120deg, #100A1C 0%, rgba(255,61,130,0.07) 100%)',
+    },
+    light: {
+        ink: '#FFF8F0',
+        inkSoft: '#FFFFFF',
+        band: '#F6EFE6',
+        panel: '#FFFFFF',
+        panelHi: '#FFF3F6',
+        line: 'rgba(26,26,46,0.10)',
+        lineHi: 'rgba(26,26,46,0.18)',
+        text: '#1A1A2E',
+        dim: '#5C5470',
+        // Much weaker on a pale ground: at dark-mode strength these washes turn
+        // the cream muddy rather than reading as light.
+        goldInk: '#A87400',
+        wash: 'radial-gradient(760px 380px at 78% 8%, rgba(255,61,130,0.07), transparent 70%), radial-gradient(620px 340px at 8% 30%, rgba(154,107,255,0.05), transparent 70%)',
+        ctaFill: 'linear-gradient(120deg, #FFFFFF 0%, rgba(255,61,130,0.06) 100%)',
+    },
+};
+
+const useTokens = () => {
+    const { mode } = useThemeMode();
+    return { ...BRAND, ...(mode === 'light' ? SURFACES.light : SURFACES.dark), mode };
 };
 
 const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
 // Display type is monospace throughout. On a product about typing code, the
 // headline set in the same face as the code is the identity — not decoration.
-const display = {
+// Takes the active tokens because its colour is the one mode-dependent part.
+const display = (C) => ({
     fontFamily: MONO,
     fontWeight: 400,
     lineHeight: 1.15,
     letterSpacing: 0,
     color: C.text,
-};
+});
 
 const eyebrow = {
     fontSize: 11,
     fontWeight: 800,
     letterSpacing: '0.18em',
     textTransform: 'uppercase',
-    color: C.pink,
+    color: BRAND.pink,
 };
 
 const focusRing = {
     '&:focus-visible': {
-        outline: `2px solid ${C.gold}`,
+        outline: `2px solid ${BRAND.pink}`,
         outlineOffset: 3,
         borderRadius: 2,
     },
@@ -67,32 +111,32 @@ const focusRing = {
 
 const MODES = [
     {
-        kicker: 'Speed run', title: 'Typing Test', to: '/typingtest', accent: C.pink,
+        kicker: 'Speed run', title: 'Typing Test', to: '/typingtest', accent: BRAND.pink,
         icon: <KeyboardIcon fontSize="small" />,
         desc: 'Build muscle memory with real code snippets and instant accuracy feedback.',
     },
     {
-        kicker: 'Precision', title: 'Syntax Sniper', to: '/syntax-sniper', accent: C.gold,
+        kicker: 'Precision', title: 'Syntax Sniper', to: '/syntax-sniper', accent: BRAND.gold,
         icon: <GpsFixedIcon fontSize="small" />,
         desc: 'Spot missing punctuation and repair broken code before the timer hits zero.',
     },
     {
-        kicker: 'Logic quest', title: 'Translation Terminal', to: '/translation-terminal', accent: C.cyan,
+        kicker: 'Logic quest', title: 'Translation Terminal', to: '/translation-terminal', accent: BRAND.cyan,
         icon: <TerminalIcon fontSize="small" />,
         desc: 'Translate plain-English prompts into C and defeat pixel-art enemies.',
     },
     {
-        kicker: 'Arcade', title: 'Falling Code', to: '/fallingtypingtest', accent: C.violet,
+        kicker: 'Arcade', title: 'Falling Code', to: '/fallingtypingtest', accent: BRAND.violet,
         icon: <CloudDownloadIcon fontSize="small" />,
         desc: 'Catch keywords before they hit the ground, then survive the Bug Bash.',
     },
     {
-        kicker: 'Adventure', title: 'Galaxy Mode', to: '/galaxy', accent: C.pink,
+        kicker: 'Adventure', title: 'Galaxy Mode', to: '/galaxy', accent: BRAND.pink,
         icon: <RocketLaunchIcon fontSize="small" />,
         desc: 'Blast through space challenges that turn practice into a full campaign.',
     },
     {
-        kicker: 'Brain mode', title: 'Logic Puzzles', to: '/logic-puzzles', accent: C.gold,
+        kicker: 'Brain mode', title: 'Logic Puzzles', to: '/logic-puzzles', accent: BRAND.gold,
         icon: <ExtensionIcon fontSize="small" />,
         desc: 'Trace loops, pointers and operators to predict what the code prints.',
     },
@@ -126,8 +170,8 @@ const HeroTerminal = () => {
             aria-hidden="true"
             sx={{
                 borderRadius: '8px',
-                border: `1px solid ${C.lineHi}`,
-                bgcolor: C.console,
+                border: `1px solid ${BRAND.consoleLine}`,
+                bgcolor: BRAND.console,
                 overflow: 'hidden',
                 fontFamily: MONO,
                 fontSize: 13,
@@ -136,7 +180,7 @@ const HeroTerminal = () => {
                     md: [
                         // Offset block in the panel's own black, no outline. It reads
                         // only where it crosses the hero's purple wash behind it.
-                        `10px 10px 0 0 ${C.console}`,
+                        `10px 10px 0 0 ${BRAND.console}`,
                         '0 36px 90px rgba(0,0,0,0.55)',
                     ].join(', '),
                 },
@@ -151,14 +195,14 @@ const HeroTerminal = () => {
                 direction="row"
                 alignItems="center"
                 spacing={1.2}
-                sx={{ px: 2, py: 1.4, borderBottom: `1px solid ${C.line}` }}
+                sx={{ px: 2, py: 1.4, borderBottom: `1px solid ${BRAND.consoleLineSoft}` }}
             >
                 <Stack direction="row" spacing={0.7}>
-                    {[C.pink, C.gold, C.cyan].map((c) => (
+                    {[BRAND.pink, BRAND.gold, BRAND.cyan].map((c) => (
                         <Box key={c} sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: c, opacity: 0.85 }} />
                     ))}
                 </Stack>
-                <Typography sx={{ fontFamily: MONO, fontSize: 11.5, color: C.dim, flexGrow: 1 }}>
+                <Typography sx={{ fontFamily: MONO, fontSize: 11.5, color: BRAND.consoleDim, flexGrow: 1 }}>
                     training-room / warm-up
                 </Typography>
                 <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#3BE08A' }} />
@@ -169,29 +213,29 @@ const HeroTerminal = () => {
 
             <Box sx={{ p: { xs: 2.2, sm: 3 } }}>
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
-                    <Typography sx={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.16em', color: C.pink }}>
+                    <Typography sx={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.16em', color: BRAND.pink }}>
                         CHALLENGE 01
                     </Typography>
-                    <Typography sx={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.16em', color: C.gold }}>
+                    <Typography sx={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.16em', color: BRAND.gold }}>
                         +100 XP
                     </Typography>
                 </Stack>
 
-                <Typography sx={{ color: C.dim, fontSize: 12.5, mb: 1.4 }}>
+                <Typography sx={{ color: BRAND.consoleDim, fontSize: 12.5, mb: 1.4 }}>
                     Type the line below to start your run.
                 </Typography>
 
                 <Box sx={{ fontSize: { xs: 14, sm: 16 }, mb: 2.2, whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                    <Box component="span" sx={{ color: C.pink }}>const</Box>{' '}
-                    <Box component="span" sx={{ color: C.text }}>score</Box>{' '}
-                    <Box component="span" sx={{ color: C.dim }}>=</Box>{' '}
-                    <Box component="span" sx={{ color: C.gold }}>100</Box>
-                    <Box component="span" sx={{ color: C.dim }}>;</Box>
+                    <Box component="span" sx={{ color: BRAND.pink }}>const</Box>{' '}
+                    <Box component="span" sx={{ color: BRAND.consoleText }}>score</Box>{' '}
+                    <Box component="span" sx={{ color: BRAND.consoleDim }}>=</Box>{' '}
+                    <Box component="span" sx={{ color: BRAND.gold }}>100</Box>
+                    <Box component="span" sx={{ color: BRAND.consoleDim }}>;</Box>
                 </Box>
 
                 <Box
                     sx={{
-                        border: `1px solid ${C.lineHi}`,
+                        border: `1px solid ${BRAND.consoleLine}`,
                         borderRadius: '6px',
                         px: 1.8, py: 1.4,
                         bgcolor: 'transparent',
@@ -200,25 +244,25 @@ const HeroTerminal = () => {
                         alignItems: 'center',
                     }}
                 >
-                    <Box component="span" sx={{ color: C.dim, fontSize: 13.5 }}>
+                    <Box component="span" sx={{ color: BRAND.consoleDim, fontSize: 13.5 }}>
                         Start typing here...
                     </Box>
                     <Box
                         sx={{
-                            width: 7, height: 15, ml: 0.5, bgcolor: C.pink, flexShrink: 0,
+                            width: 7, height: 15, ml: 0.5, bgcolor: BRAND.pink, flexShrink: 0,
                             animation: reduceMotion ? 'none' : 'stCaret 1.1s steps(2) infinite',
                             '@keyframes stCaret': { to: { opacity: 0 } },
                         }}
                     />
                 </Box>
 
-                <Box sx={{ mt: 2.4, mb: 1.6, height: '1px', bgcolor: C.line }} />
+                <Box sx={{ mt: 2.4, mb: 1.6, height: '1px', bgcolor: BRAND.consoleLineSoft }} />
 
                 <Stack direction="row" justifyContent="space-between">
-                    <Typography sx={{ fontFamily: MONO, fontSize: 10.5, color: C.dim }}>
+                    <Typography sx={{ fontFamily: MONO, fontSize: 10.5, color: BRAND.consoleDim }}>
                         your keyboard is your controller
                     </Typography>
-                    <Typography sx={{ fontFamily: MONO, fontSize: 10.5, color: C.gold }}>
+                    <Typography sx={{ fontFamily: MONO, fontSize: 10.5, color: BRAND.gold }}>
                         0 streak
                     </Typography>
                 </Stack>
@@ -228,6 +272,8 @@ const HeroTerminal = () => {
 };
 
 const LandingPage = () => {
+    const C = useTokens();
+    const { mode, toggleMode } = useThemeMode();
     const [board, setBoard] = useState([]);
     const [boardState, setBoardState] = useState('loading'); // loading | ok | empty | error
     useEffect(() => {
@@ -369,6 +415,31 @@ const LandingPage = () => {
 
                         <Box sx={{ width: '1px', height: 20, bgcolor: C.lineHi, display: { xs: 'none', md: 'block' }, mx: 0.5 }} />
                         <Box
+                            component="button"
+                            type="button"
+                            onClick={toggleMode}
+                            aria-label={mode === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+                            sx={{
+                                ...focusRing,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 34,
+                                height: 34,
+                                p: 0,
+                                border: 0,
+                                borderRadius: '6px',
+                                bgcolor: 'transparent',
+                                color: C.dim,
+                                cursor: 'pointer',
+                                '&:hover': { color: C.text, bgcolor: C.panel },
+                            }}
+                        >
+                            {mode === 'light'
+                                ? <DarkModeIcon sx={{ fontSize: 18 }} />
+                                : <LightModeIcon sx={{ fontSize: 18 }} />}
+                        </Box>
+                        <Box
                             component={RouterLink}
                             to="/login"
                             sx={{ ...focusRing, fontWeight: 700, fontSize: 14, color: C.text, textDecoration: 'none', px: 1, display: { xs: 'none', sm: 'inline-flex' } }}
@@ -390,8 +461,7 @@ const LandingPage = () => {
                     py: { xs: 6, md: 9 },
                     '&::before': {
                         content: '""', position: 'absolute', inset: 0, pointerEvents: 'none',
-                        background: `radial-gradient(760px 380px at 78% 8%, rgba(255,61,130,0.16), transparent 70%),
-                                     radial-gradient(620px 340px at 8% 30%, rgba(154,107,255,0.12), transparent 70%)`,
+                        background: C.wash,
                     },
                 }}
             >
@@ -406,13 +476,13 @@ const LandingPage = () => {
                     >
                         <Box>
                             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
-                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: C.gold }} />
+                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: C.goldInk }} />
                                 <Typography sx={eyebrow}>Learn code. Play hard.</Typography>
                             </Stack>
 
                             <Typography
                                 variant="h1"
-                                sx={{ ...display, fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' }, maxWidth: { xs: '100%', md: 312 }, mb: 3 }}
+                                sx={{ ...display(C), fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' }, maxWidth: { xs: '100%', md: 312 }, mb: 3 }}
                             >
                                 Level up your{' '}
                                 <Box component="span" sx={{ color: C.pink }}>coding skills.</Box>
@@ -489,7 +559,7 @@ const LandingPage = () => {
                     >
                         <Box>
                             <Typography sx={{ ...eyebrow, mb: 1.5 }}>Choose your arena</Typography>
-                            <Typography variant="h2" sx={{ ...display, fontSize: { xs: '1.7rem', md: '2.15rem' } }}>
+                            <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.7rem', md: '2.15rem' } }}>
                                 Practice should feel like{' '}
                                 <Box component="span" sx={{ color: C.pink }}>play.</Box>
                             </Typography>
@@ -582,7 +652,7 @@ const LandingPage = () => {
                 <Container maxWidth="lg">
                     <Stack alignItems="center" sx={{ mb: { xs: 5, md: 8 }, textAlign: 'center' }}>
                         <Typography sx={{ ...eyebrow, mb: 1.5 }}>The loop</Typography>
-                        <Typography variant="h2" sx={{ ...display, fontSize: { xs: '1.7rem', md: '2.15rem' }, mb: 2 }}>
+                        <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.7rem', md: '2.15rem' }, mb: 2 }}>
                             Three steps to <Box component="span" sx={{ color: C.pink }}>level up.</Box>
                         </Typography>
                         <Typography sx={{ color: C.dim, fontSize: 14.5, maxWidth: 420, lineHeight: 1.7 }}>
@@ -611,7 +681,8 @@ const LandingPage = () => {
                                             top: 60,
                                             right: -14,
                                             transform: 'translateY(-50%)',
-                                            color: C.lineHi,
+                                            color: C.dim,
+                                            opacity: 0.5,
                                             fontSize: 20,
                                             lineHeight: 1,
                                         }}
@@ -619,7 +690,7 @@ const LandingPage = () => {
                                         →
                                     </Box>
                                 )}
-                                <Typography sx={{ fontFamily: MONO, fontSize: 12, color: C.gold, letterSpacing: '0.16em', mb: 2 }}>
+                                <Typography sx={{ fontFamily: MONO, fontSize: 12, color: C.goldInk, letterSpacing: '0.16em', mb: 2 }}>
                                     {s.n}
                                 </Typography>
                                 <Box
@@ -659,7 +730,7 @@ const LandingPage = () => {
                     >
                         <Box>
                             <Typography sx={{ ...eyebrow, mb: 1.5 }}>Live from the arena</Typography>
-                            <Typography variant="h2" sx={{ ...display, fontSize: { xs: '1.7rem', md: '2.15rem' }, mb: 2.5 }}>
+                            <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.7rem', md: '2.15rem' }, mb: 2.5 }}>
                                 Every session <Box component="span" sx={{ color: C.pink }}>counts.</Box>
                             </Typography>
                             <Typography sx={{ color: C.dim, fontSize: 14.5, lineHeight: 1.7, mb: 3, maxWidth: 380 }}>
@@ -683,7 +754,7 @@ const LandingPage = () => {
                         <Box
                             sx={{
                                 borderRadius: '8px',
-                                border: `1px solid ${C.gold}`,
+                                border: `1px solid ${C.goldInk}`,
                                 bgcolor: C.panel,
                                 overflow: 'hidden',
                                 boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
@@ -694,7 +765,7 @@ const LandingPage = () => {
                                 alignItems="center"
                                 sx={{ px: 2.5, py: 1.8, borderBottom: `1px solid ${C.line}`, gap: 1.2 }}
                             >
-                                <EmojiEventsIcon sx={{ fontSize: 17, color: C.gold }} />
+                                <EmojiEventsIcon sx={{ fontSize: 17, color: C.goldInk }} />
                                 <Typography sx={{ fontWeight: 800, fontSize: 14, flexGrow: 1, color: C.text }}>
                                     Top scores
                                 </Typography>
@@ -756,7 +827,7 @@ const LandingPage = () => {
                                         <Typography sx={{ flexGrow: 1, fontSize: 13.5, fontWeight: 600, color: C.text }}>
                                             {r.username || 'Player'}
                                         </Typography>
-                                        <Typography sx={{ fontFamily: MONO, fontSize: 12.5, color: i === 0 ? C.gold : C.dim }}>
+                                        <Typography sx={{ fontFamily: MONO, fontSize: 12.5, color: i === 0 ? C.goldInk : C.dim }}>
                                             {r.score ?? r.wpm ?? '—'} <Box component="span" sx={{ fontSize: 10 }}>XP</Box>
                                         </Typography>
                                     </Stack>
@@ -825,12 +896,12 @@ const LandingPage = () => {
                         gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) auto' },
                         gap: 4,
                         alignItems: 'center',
-                        background: `linear-gradient(120deg, ${C.inkSoft} 0%, rgba(255,61,130,0.07) 100%)`,
+                        background: C.ctaFill,
                     }}
                 >
                     <Box>
                         <Typography sx={{ ...eyebrow, mb: 1.5 }}>Ready player one?</Typography>
-                        <Typography variant="h2" sx={{ ...display, fontSize: { xs: '1.6rem', md: '2rem' }, mb: 1.8 }}>
+                        <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.6rem', md: '2rem' }, mb: 1.8 }}>
                             Your next high score starts{' '}
                             <Box component="span" sx={{ color: C.pink }}>now.</Box>
                         </Typography>

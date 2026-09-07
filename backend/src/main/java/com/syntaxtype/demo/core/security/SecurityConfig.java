@@ -53,6 +53,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/leaderboards/user/**").permitAll()
                         // Everything else under /api requires authentication
                         .requestMatchers("/api/**").authenticated()
+                        // springdoc serves these outside /api, so without an explicit rule
+                        // they fall through to anyRequest().permitAll() and hand anonymous
+                        // callers the whole endpoint map. Both the bare path and the
+                        // wildcard are listed because the two matcher implementations
+                        // disagree about whether /path/** covers /path itself.
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml",
+                                "/swagger-ui", "/swagger-ui/**", "/swagger-ui.html").hasRole("ADMIN")
                         // Static files, root page, etc.
                         .anyRequest().permitAll()
                 )

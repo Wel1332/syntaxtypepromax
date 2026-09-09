@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Container, Stack, Typography, useMediaQuery } from '@mui/material';
+import { Box, Container, GlobalStyles, Stack, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
@@ -81,15 +81,48 @@ const useTokens = () => {
 };
 
 const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+const PIXEL = '"Pixelify Sans", "DM Sans", sans-serif';
 
-// Display type is monospace throughout. On a product about typing code, the
-// headline set in the same face as the code is the identity — not decoration.
-// Takes the active tokens because its colour is the one mode-dependent part.
+// ── Type roles ────────────────────────────────────────────────────────────────
+// Three faces, one job each. Mixing them at random is what makes a page look
+// generated, so the rule is by *kind of thing*, not by size:
+//
+//   PIXEL  the five big headlines, and nothing else. This is the arcade voice
+//          and it is what a student scrolling past actually registers — but it
+//          is only legible at 28px and up, which is why it goes no further.
+//   MONO   anything that is or represents code — the console, the mode titles,
+//          the step titles, the wordmark, and every numeral on the page.
+//          ThemeContext already records why Pixelify is kept away from digits
+//          (its numerals are ambiguous at a glance), and a leaderboard where 8
+//          can be misread as 0 is worse than a plain one.
+//   DM Sans  everything a visitor has to *read* — body copy, nav, buttons,
+//          eyebrows. Prose is not where a display face earns anything.
+//
+// Keeping the console monospace is the load-bearing part: it is a terminal, and
+// a terminal set in a display face stops reading as one.
+// Two hard limits on Pixelify, both measured in the browser rather than guessed,
+// because both of them silently corrupt words rather than just looking wrong.
+//
+// Weight: 500, never 700. The counters are one grid unit wide and the extra
+// stroke weight at 700 closes them — "Practice" rasterises as "Practioe",
+// "Climb" as "Olimb".
+//
+// Size: 28px and up. Below roughly 26px the c/C aperture cannot survive
+// rasterisation at any weight, so a 18px "Falling Code" still reads "Falling
+// Oode". This is why the mode and step titles stayed monospace: the size they
+// want to be is the size Pixelify stops working at.
+//
+// ThemeContext sets h1-h4 to Pixelify 700 app-wide, so every heading in the app
+// has the weight defect. Fixing that is a separate, wider change.
+const PIXEL_WEIGHT = 500;
+
 const display = (C) => ({
-    fontFamily: MONO,
-    fontWeight: 400,
-    lineHeight: 1.15,
-    letterSpacing: 0,
+    fontFamily: PIXEL,
+    fontWeight: PIXEL_WEIGHT,
+    // Pixelify sits on a visibly square grid, so it needs a little air between
+    // glyphs and a tighter leading than a text face at the same size.
+    lineHeight: 1.08,
+    letterSpacing: '0.02em',
     color: C.text,
 });
 
@@ -156,6 +189,112 @@ const STEPS = [
         desc: 'Earn XP, unlock badges, and watch your accuracy climb run over run.',
     },
 ];
+
+// ── Scroll reveal ─────────────────────────────────────────────────────────────
+// Each block fades up once as it reaches the fold, then stops being watched, so
+// scrolling back up does not replay it — content that re-enters on every pass
+// reads as a rendering fault rather than as motion.
+//
+// Only opacity and transform are animated, which keeps the whole effect on the
+// compositor: no layout, no paint, nothing that can drop frames on the cheap
+// laptops this is aimed at.
+const REVEAL_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
+const Reveal = ({ children, delay = 0, y = 22, sx = {}, ...rest }) => {
+    const ref = useRef(null);
+    const [shown, setShown] = useState(false);
+    const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+
+    useEffect(() => {
+        // Every path that cannot animate must end at "visible". A reveal that
+        // fails closed leaves the page blank, which is a far worse bug than a
+        // missing animation.
+        if (reduceMotion || typeof IntersectionObserver === 'undefined' || !ref.current) {
+            setShown(true);
+            return undefined;
+        }
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (!entry.isIntersecting) return;
+                setShown(true);
+                observer.disconnect();
+            },
+            // The negative bottom margin holds the trigger back slightly, so the
+            // block is settling as it arrives instead of already being still.
+            { threshold: 0.1, rootMargin: '0px 0px -8% 0px' }
+        );
+        observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, [reduceMotion]);
+
+    return (
+        <Box
+            ref={ref}
+            sx={{
+                ...sx,
+                opacity: shown ? 1 : 0,
+                transform: shown ? 'none' : `translate3d(0, ${y}px, 0)`,
+                transition: reduceMotion
+                    ? 'none'
+                    : `opacity 560ms ${REVEAL_EASE} ${delay}ms, transform 560ms ${REVEAL_EASE} ${delay}ms`,
+                // Dropped once the block has landed; leaving it on permanently
+                // pins a compositor layer per section for the whole visit.
+                willChange: shown ? 'auto' : 'opacity, transform',
+            }}
+            {...rest}
+        >
+            {children}
+        </Box>
+    );
+};
+
+// Reads as an XP bar, which is the one progress metaphor this product has
+// already taught the visitor. It tracks the scrollbar one-to-one rather than
+// animating on its own, so it stays honest under reduced motion and is left in
+// place there.
+const ScrollProgress = () => {
+    const [progress, setProgress] = useState(0);
+
+    useEffect(() => {
+        let frame = 0;
+        const measure = () => {
+            frame = 0;
+            const doc = document.documentElement;
+            const scrollable = doc.scrollHeight - doc.clientHeight;
+            setProgress(scrollable > 0 ? Math.min(1, doc.scrollTop / scrollable) : 0);
+        };
+        // Coalesced into a frame: scroll fires far faster than the screen
+        // refreshes, and setting state on every event is how a landing page
+        // ends up janky on a trackpad.
+        const onScroll = () => { if (!frame) frame = window.requestAnimationFrame(measure); };
+
+        measure();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        return () => {
+            if (frame) window.cancelAnimationFrame(frame);
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onScroll);
+        };
+    }, []);
+
+    return (
+        <Box
+            aria-hidden="true"
+            sx={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0,
+                height: '3px',
+                zIndex: 1200,
+                pointerEvents: 'none',
+                transformOrigin: '0 50%',
+                transform: `scaleX(${progress})`,
+                background: `linear-gradient(90deg, ${BRAND.pink} 0%, ${BRAND.gold} 100%)`,
+            }}
+        />
+    );
+};
 
 // ── Hero console ──────────────────────────────────────────────────────────────
 // A still of a real round, matching the reference exactly: the challenge line is
@@ -359,6 +498,20 @@ const LandingPage = () => {
 
     return (
         <Box sx={{ bgcolor: C.ink, color: C.text, minHeight: '100vh', overflowX: 'hidden' }}>
+            {/* Scoped to this route rather than index.css: the two anchor links in
+                the header are the only ones in the app, and smooth scrolling is a
+                behaviour change the game screens never asked for. Mounting it with
+                the page means it unmounts with the page too. */}
+            <GlobalStyles
+                styles={{
+                    html: { scrollBehavior: 'smooth' },
+                    '@media (prefers-reduced-motion: reduce)': {
+                        html: { scrollBehavior: 'auto' },
+                    },
+                }}
+            />
+            <ScrollProgress />
+
             {/* Header — the landing page owns its own, so the themed app AppBar is
                 hidden on this route (see App.js). */}
             <Box component="header" sx={{ borderBottom: `1px solid ${C.line}` }}>
@@ -474,7 +627,10 @@ const LandingPage = () => {
                             alignItems: 'center',
                         }}
                     >
-                        <Box>
+                        {/* Above the fold, so this fires on mount rather than on scroll —
+                            the observer reports it visible immediately. That gives the page
+                            an entrance without a second code path for it. */}
+                        <Reveal>
                             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
                                 <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: C.goldInk }} />
                                 <Typography sx={eyebrow}>Learn code. Play hard.</Typography>
@@ -482,7 +638,12 @@ const LandingPage = () => {
 
                             <Typography
                                 variant="h1"
-                                sx={{ ...display(C), fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' }, maxWidth: { xs: '100%', md: 312 }, mb: 3 }}
+                                // Larger than the monospace it replaces: Pixelify runs narrower
+                                // per character, so matching the old rem value would have shrunk
+                                // the headline optically. maxWidth follows for the same reason —
+                                // it exists to hold the two-line wrap of the reference, and the
+                                // wrap point moved with the face.
+                                sx={{ ...display(C), fontSize: { xs: '2.5rem', sm: '3rem', md: '3.55rem' }, maxWidth: { xs: '100%', md: 430 }, mb: 3 }}
                             >
                                 Level up your{' '}
                                 <Box component="span" sx={{ color: C.pink }}>coding skills.</Box>
@@ -538,9 +699,11 @@ const LandingPage = () => {
                                         : 'The board is empty. The first score posted is the one to beat.'}
                                 </Typography>
                             )}
-                        </Box>
+                        </Reveal>
 
-                        <HeroTerminal />
+                        <Reveal delay={120}>
+                            <HeroTerminal />
+                        </Reveal>
                     </Box>
                 </Container>
             </Box>
@@ -548,7 +711,7 @@ const LandingPage = () => {
             {/* ── Game modes ───────────────────────────────────────────────── */}
             <Box component="section" id="modes" sx={{ pt: { xs: 5, md: 7 }, pb: { xs: 7, md: 11 }, scrollMarginTop: 24 }}>
                 <Container maxWidth="lg">
-                    <Box
+                    <Reveal
                         sx={{
                             display: 'grid',
                             gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1.3fr) minmax(0, 1fr)' },
@@ -559,7 +722,7 @@ const LandingPage = () => {
                     >
                         <Box>
                             <Typography sx={{ ...eyebrow, mb: 1.5 }}>Choose your arena</Typography>
-                            <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.7rem', md: '2.15rem' } }}>
+                            <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.9rem', md: '2.5rem' } }}>
                                 Practice should feel like{' '}
                                 <Box component="span" sx={{ color: C.pink }}>play.</Box>
                             </Typography>
@@ -568,7 +731,7 @@ const LandingPage = () => {
                             Six ways to turn repetition into momentum. Pick a mode, chase a score, and make
                             progress visible.
                         </Typography>
-                    </Box>
+                    </Reveal>
 
                     <Box
                         sx={{
@@ -577,63 +740,78 @@ const LandingPage = () => {
                             gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))' },
                         }}
                     >
-                        {MODES.map((m) => (
-                            <Box
-                                key={m.title}
-                                component={RouterLink}
-                                to={SIGN_UP}
-                                sx={{
-                                    ...focusRing,
-                                    display: 'block',
-                                    textDecoration: 'none',
-                                    position: 'relative',
-                                    p: 2.8,
-                                    borderRadius: '8px',
-                                    bgcolor: C.panel,
-                                    border: `1px solid ${C.line}`,
-                                    overflow: 'hidden',
-                                    '&::before': {
-                                        content: '""',
-                                        position: 'absolute',
-                                        top: 0, left: 0, right: 0, height: '2px',
-                                        bgcolor: m.accent,
-                                    },
-                                    transition: 'transform 180ms ease, background-color 180ms ease, border-color 180ms ease',
-                                    '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
-                                    '&:hover': {
-                                        transform: 'translateY(-3px)',
-                                        bgcolor: C.panelHi,
-                                        borderColor: C.lineHi,
-                                    },
-                                    '&:hover .st-arrow': { transform: 'translateX(3px)', color: m.accent },
-                                }}
-                            >
+                        {MODES.map((m, i) => (
+                            // 70ms a card, so all six have landed inside half a second and
+                            // the grid still reads as one gesture. A longer step turns the
+                            // six modes into six separate events the eye has to follow.
+                            //
+                            // The stagger runs on source order, not on the visual row, so at
+                            // the two-column breakpoint the delays travel down the left
+                            // column first. It is close enough at this speed to be invisible.
+                            <Reveal key={m.title} delay={i * 70} sx={{ height: '100%' }}>
                                 <Box
+                                    component={RouterLink}
+                                    to={SIGN_UP}
                                     sx={{
-                                        width: 34, height: 34, borderRadius: '6px',
-                                        display: 'grid', placeItems: 'center',
-                                        bgcolor: 'rgba(255,255,255,0.05)',
-                                        color: m.accent, mb: 2.5,
+                                        ...focusRing,
+                                        display: 'block',
+                                        // The grid stretches the Reveal wrapper now, not the card,
+                                        // so the card has to claim the height to stay level with
+                                        // its row.
+                                        height: '100%',
+                                        textDecoration: 'none',
+                                        position: 'relative',
+                                        p: 2.8,
+                                        borderRadius: '8px',
+                                        bgcolor: C.panel,
+                                        border: `1px solid ${C.line}`,
+                                        overflow: 'hidden',
+                                        '&::before': {
+                                            content: '""',
+                                            position: 'absolute',
+                                            top: 0, left: 0, right: 0, height: '2px',
+                                            bgcolor: m.accent,
+                                        },
+                                        transition: 'transform 180ms ease, background-color 180ms ease, border-color 180ms ease',
+                                        '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+                                        '&:hover': {
+                                            transform: 'translateY(-3px)',
+                                            bgcolor: C.panelHi,
+                                            borderColor: C.lineHi,
+                                        },
+                                        '&:hover .st-arrow': { transform: 'translateX(3px)', color: m.accent },
                                     }}
                                 >
-                                    {m.icon}
+                                    <Box
+                                        sx={{
+                                            width: 34, height: 34, borderRadius: '6px',
+                                            display: 'grid', placeItems: 'center',
+                                            bgcolor: 'rgba(255,255,255,0.05)',
+                                            color: m.accent, mb: 2.5,
+                                        }}
+                                    >
+                                        {m.icon}
+                                    </Box>
+
+                                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                                        <Typography sx={{ ...eyebrow, color: C.dim, fontSize: 10 }}>{m.kicker}</Typography>
+                                        <ArrowForwardIcon
+                                            className="st-arrow"
+                                            sx={{ fontSize: 15, color: C.dim, transition: 'transform 180ms, color 180ms' }}
+                                        />
+                                    </Stack>
+
+                                    {/* Monospace, not Pixelify: a card title wants ~16px, well under
+                                        the 28px floor, and "Falling Code" reads as "Falling Oode"
+                                        down there. */}
+                                    <Typography sx={{ fontFamily: MONO, fontWeight: 700, fontSize: 16, color: C.text, mb: 1 }}>
+                                        {m.title}
+                                    </Typography>
+                                    <Typography sx={{ color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
+                                        {m.desc}
+                                    </Typography>
                                 </Box>
-
-                                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                                    <Typography sx={{ ...eyebrow, color: C.dim, fontSize: 10 }}>{m.kicker}</Typography>
-                                    <ArrowForwardIcon
-                                        className="st-arrow"
-                                        sx={{ fontSize: 15, color: C.dim, transition: 'transform 180ms, color 180ms' }}
-                                    />
-                                </Stack>
-
-                                <Typography sx={{ fontFamily: MONO, fontWeight: 700, fontSize: 16, color: C.text, mb: 1 }}>
-                                    {m.title}
-                                </Typography>
-                                <Typography sx={{ color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
-                                    {m.desc}
-                                </Typography>
-                            </Box>
+                            </Reveal>
                         ))}
                     </Box>
 
@@ -650,15 +828,17 @@ const LandingPage = () => {
                 sx={{ bgcolor: C.band, py: { xs: 7, md: 12 }, borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}`, scrollMarginTop: 24 }}
             >
                 <Container maxWidth="lg">
-                    <Stack alignItems="center" sx={{ mb: { xs: 5, md: 8 }, textAlign: 'center' }}>
-                        <Typography sx={{ ...eyebrow, mb: 1.5 }}>The loop</Typography>
-                        <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.7rem', md: '2.15rem' }, mb: 2 }}>
-                            Three steps to <Box component="span" sx={{ color: C.pink }}>level up.</Box>
-                        </Typography>
-                        <Typography sx={{ color: C.dim, fontSize: 14.5, maxWidth: 420, lineHeight: 1.7 }}>
-                            Short sessions, real feedback, and a leaderboard that makes coming back easy.
-                        </Typography>
-                    </Stack>
+                    <Reveal sx={{ mb: { xs: 5, md: 8 } }}>
+                        <Stack alignItems="center" sx={{ textAlign: 'center' }}>
+                            <Typography sx={{ ...eyebrow, mb: 1.5 }}>The loop</Typography>
+                            <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.9rem', md: '2.5rem' }, mb: 2 }}>
+                                Three steps to <Box component="span" sx={{ color: C.pink }}>level up.</Box>
+                            </Typography>
+                            <Typography sx={{ color: C.dim, fontSize: 14.5, maxWidth: 420, lineHeight: 1.7 }}>
+                                Short sessions, real feedback, and a leaderboard that makes coming back easy.
+                            </Typography>
+                        </Stack>
+                    </Reveal>
 
                     <Box
                         sx={{
@@ -668,50 +848,55 @@ const LandingPage = () => {
                         }}
                     >
                         {STEPS.map((s, i) => (
-                            <Stack key={s.n} alignItems="center" sx={{ textAlign: 'center', position: 'relative' }}>
-                                {/* Connector between steps. These are a real sequence — you
-                                    cannot climb the board before you have an account — so the
-                                    arrow carries order rather than decorating the row. */}
-                                {i < STEPS.length - 1 && (
+                            // Wider stagger than the mode cards on purpose: these three are
+                            // an ordered sequence, so letting them arrive left-to-right says
+                            // the same thing the connector arrows do.
+                            <Reveal key={s.n} delay={i * 130}>
+                                <Stack alignItems="center" sx={{ textAlign: 'center', position: 'relative' }}>
+                                    {/* Connector between steps. These are a real sequence — you
+                                        cannot climb the board before you have an account — so the
+                                        arrow carries order rather than decorating the row. */}
+                                    {i < STEPS.length - 1 && (
+                                        <Box
+                                            aria-hidden="true"
+                                            sx={{
+                                                display: { xs: 'none', md: 'block' },
+                                                position: 'absolute',
+                                                top: 60,
+                                                right: -14,
+                                                transform: 'translateY(-50%)',
+                                                color: C.dim,
+                                                opacity: 0.5,
+                                                fontSize: 20,
+                                                lineHeight: 1,
+                                            }}
+                                        >
+                                            →
+                                        </Box>
+                                    )}
+                                    <Typography sx={{ fontFamily: MONO, fontSize: 12, color: C.goldInk, letterSpacing: '0.16em', mb: 2 }}>
+                                        {s.n}
+                                    </Typography>
                                     <Box
-                                        aria-hidden="true"
                                         sx={{
-                                            display: { xs: 'none', md: 'block' },
-                                            position: 'absolute',
-                                            top: 60,
-                                            right: -14,
-                                            transform: 'translateY(-50%)',
-                                            color: C.dim,
-                                            opacity: 0.5,
-                                            fontSize: 20,
-                                            lineHeight: 1,
+                                            width: 64, height: 64, borderRadius: '50%',
+                                            display: 'grid', placeItems: 'center',
+                                            border: `1.5px solid ${C.pink}`,
+                                            color: C.pink,
+                                            bgcolor: 'rgba(255,61,130,0.07)',
+                                            mb: 2.5,
                                         }}
                                     >
-                                        →
+                                        {s.icon}
                                     </Box>
-                                )}
-                                <Typography sx={{ fontFamily: MONO, fontSize: 12, color: C.goldInk, letterSpacing: '0.16em', mb: 2 }}>
-                                    {s.n}
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        width: 64, height: 64, borderRadius: '50%',
-                                        display: 'grid', placeItems: 'center',
-                                        border: `1.5px solid ${C.pink}`,
-                                        color: C.pink,
-                                        bgcolor: 'rgba(255,61,130,0.07)',
-                                        mb: 2.5,
-                                    }}
-                                >
-                                    {s.icon}
-                                </Box>
-                                <Typography sx={{ fontFamily: MONO, fontWeight: 700, fontSize: 15.5, mb: 1.2, color: C.text }}>
-                                    {s.title}
-                                </Typography>
-                                <Typography sx={{ color: C.dim, fontSize: 13, lineHeight: 1.65, maxWidth: 250 }}>
-                                    {s.desc}
-                                </Typography>
-                            </Stack>
+                                    <Typography sx={{ fontFamily: MONO, fontWeight: 700, fontSize: 15.5, mb: 1.2, color: C.text }}>
+                                        {s.title}
+                                    </Typography>
+                                    <Typography sx={{ color: C.dim, fontSize: 13, lineHeight: 1.65, maxWidth: 250 }}>
+                                        {s.desc}
+                                    </Typography>
+                                </Stack>
+                            </Reveal>
                         ))}
                     </Box>
                 </Container>
@@ -728,9 +913,9 @@ const LandingPage = () => {
                             alignItems: 'center',
                         }}
                     >
-                        <Box>
+                        <Reveal>
                             <Typography sx={{ ...eyebrow, mb: 1.5 }}>Live from the arena</Typography>
-                            <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.7rem', md: '2.15rem' }, mb: 2.5 }}>
+                            <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.9rem', md: '2.5rem' }, mb: 2.5 }}>
                                 Every session <Box component="span" sx={{ color: C.pink }}>counts.</Box>
                             </Typography>
                             <Typography sx={{ color: C.dim, fontSize: 14.5, lineHeight: 1.7, mb: 3, maxWidth: 380 }}>
@@ -749,9 +934,10 @@ const LandingPage = () => {
                             >
                                 See the full leaderboard <ArrowForwardIcon sx={{ fontSize: 15 }} />
                             </Box>
-                        </Box>
+                        </Reveal>
 
-                        <Box
+                        <Reveal
+                            delay={140}
                             sx={{
                                 borderRadius: '8px',
                                 border: `1px solid ${C.goldInk}`,
@@ -878,14 +1064,14 @@ const LandingPage = () => {
                                     Create an account to compete <ArrowForwardIcon sx={{ fontSize: 15 }} />
                                 </Box>
                             </Box>
-                        </Box>
+                        </Reveal>
                     </Box>
                 </Container>
             </Box>
 
             {/* ── Closing CTA ──────────────────────────────────────────────── */}
             <Container maxWidth="lg" sx={{ pb: { xs: 7, md: 12 } }}>
-                <Box
+                <Reveal
                     sx={{
                         borderRadius: '10px',
                         border: `1px solid ${C.lineHi}`,
@@ -901,7 +1087,7 @@ const LandingPage = () => {
                 >
                     <Box>
                         <Typography sx={{ ...eyebrow, mb: 1.5 }}>Ready player one?</Typography>
-                        <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.6rem', md: '2rem' }, mb: 1.8 }}>
+                        <Typography variant="h2" sx={{ ...display(C), fontSize: { xs: '1.8rem', md: '2.3rem' }, mb: 1.8 }}>
                             Your next high score starts{' '}
                             <Box component="span" sx={{ color: C.pink }}>now.</Box>
                         </Typography>
@@ -916,7 +1102,7 @@ const LandingPage = () => {
                     >
                         Create your account <ArrowForwardIcon sx={{ fontSize: 16 }} />
                     </Box>
-                </Box>
+                </Reveal>
             </Container>
 
             {/* ── Footer ───────────────────────────────────────────────────── */}

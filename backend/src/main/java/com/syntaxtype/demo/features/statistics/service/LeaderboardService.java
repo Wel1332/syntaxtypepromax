@@ -11,8 +11,10 @@ import com.syntaxtype.demo.features.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -22,6 +24,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LeaderboardService {
     private static final Logger log = LoggerFactory.getLogger(LeaderboardService.class);
+
+    /** Rows returned by the global board. Named because the SQL limit and the API contract must agree. */
+    private static final int GLOBAL_TOP_N = 10;
 
     private final LeaderboardRepository leaderboardRepository;
     private final UserRepository userRepository;
@@ -210,51 +215,31 @@ public class LeaderboardService {
      * @param metricType The metric to rank by: "wpm", "accuracy", or "combined"
      * @return List of top 10 LeaderboardEntry with calculated ranks
      */
+    @Transactional(readOnly = true)
     public List<LeaderboardEntry> getGlobalTop10(String metricType) {
-        // Get all entries and find best per user
-        List<Leaderboard> allEntries = leaderboardRepository.findTopByWordsPerMinute();
-        
-        // Group by user and find best entry per user for the given metric
-        Map<Long, Leaderboard> bestPerUser = new HashMap<>();
-        
-        for (Leaderboard entry : allEntries) {
-            Long userId = entry.getUser().getUserId();
-            Leaderboard existing = bestPerUser.get(userId);
-            
-            if (existing == null) {
-                bestPerUser.put(userId, entry);
-            } else {
-                // Compare based on metric type
-                boolean isBetter = switch (metricType.toLowerCase()) {
-                    case "wpm" -> entry.getWordsPerMinute() > existing.getWordsPerMinute();
-                    case "accuracy" -> entry.getAccuracy() > existing.getAccuracy();
-                    case "combined" -> LeaderboardEntry.calculateCombinedScore(entry.getWordsPerMinute(), entry.getAccuracy())
-                            > LeaderboardEntry.calculateCombinedScore(existing.getWordsPerMinute(), existing.getAccuracy());
-                    default -> false;
-                };
-                
-                if (isBetter) {
-                    bestPerUser.put(userId, entry);
-                }
-            }
+        // Anything unrecognised becomes "combined", matching the controller's own
+        // default. Previously an unknown metric fell through to `default -> false`
+        // and `default -> 0`, which kept whichever row happened to be seen first
+        // per user and then left them unsorted -- a silently wrong board rather
+        // than an error.
+        String metric = normaliseMetric(metricType);
+
+        // The database now does the per-user reduction and the limit. This used to
+        // read every row in `leaderboards` with its user joined, then group and sort
+        // in memory, so the cost of rendering ten rows grew with the whole table --
+        // on the endpoint that backs the public landing page and the health check.
+        List<Leaderboard> top10 =
+                leaderboardRepository.findBestPerUserByMetric(metric, PageRequest.of(0, GLOBAL_TOP_N));
+
+        return assignRanksWithTies(top10, metric);
+    }
+
+    private static String normaliseMetric(String metricType) {
+        if (metricType == null) {
+            return "combined";
         }
-        
-        // Sort by the specified metric and take top 10
-        List<Leaderboard> top10 = bestPerUser.values().stream()
-                .sorted((a, b) -> {
-                    int comparison = switch (metricType.toLowerCase()) {
-                        case "wpm" -> b.getWordsPerMinute().compareTo(a.getWordsPerMinute());
-                        case "accuracy" -> b.getAccuracy().compareTo(a.getAccuracy());
-                        case "combined" -> LeaderboardEntry.calculateCombinedScore(b.getWordsPerMinute(), b.getAccuracy())
-                                .compareTo(LeaderboardEntry.calculateCombinedScore(a.getWordsPerMinute(), a.getAccuracy()));
-                        default -> 0;
-                    };
-                    return comparison;
-                })
-                .limit(10)
-                .toList();
-        
-        return assignRanksWithTies(top10, metricType.toLowerCase());
+        String metric = metricType.toLowerCase();
+        return (metric.equals("wpm") || metric.equals("accuracy")) ? metric : "combined";
     }
 
     /**
@@ -383,6 +368,11 @@ public class LeaderboardService {
      * @param rawScore Raw game score
      * @return LeaderboardUpdateResult with success, isNewBest, and rank
      */
+    // Evicts the whole leaderboard cache, not one key: a single new score can
+    // reorder the global board and every category board that user appears on, so
+    // there is no subset that is safe to keep. The cache is small and refills on
+    // the next read.
+    @CacheEvict(value = "leaderboard", allEntries = true)
     public LeaderboardUpdateResult updateLeaderboardIfBetter(String username, Category category, Integer wpm, Integer accuracy, Integer rawScore) {
         try {
             // Find user by username

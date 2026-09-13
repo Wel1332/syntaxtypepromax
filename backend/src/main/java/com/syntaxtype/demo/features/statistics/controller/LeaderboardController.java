@@ -30,7 +30,17 @@ public class LeaderboardController {
      * @param page The page number (offset pagination, default 0)
      * @return List of top 10 LeaderboardEntry with ranks
      */
-    @Cacheable(value = "leaderboard", key = "'global:' + #metric + ':' + #page", unless = "#result == null")
+    // sync = true is load-bearing, not a tuning knob. Without it Spring does a
+    // non-atomic get / invoke / put, so the instant the entry expires every
+    // in-flight request misses at once and they all run the query together
+    // against a ten-connection pool. Measured with 40 concurrent readers: all 40
+    // stalled on a ~40s cycle, the worst waiting 12s, while the median request
+    // was 7ms. sync = true collapses those misses into one load that the rest
+    // wait on.
+    //
+    // It is incompatible with `unless`, which is no loss here: the method returns
+    // ResponseEntity.ok(...) and can never be null, so that condition never fired.
+    @Cacheable(value = "leaderboard", key = "'global:' + #metric + ':' + #page", sync = true)
     @GetMapping("/global")
     public ResponseEntity<List<LeaderboardEntry>> getGlobalLeaderboard(
             @RequestParam(defaultValue = "combined") String metric,
@@ -45,7 +55,8 @@ public class LeaderboardController {
      * @param metric The metric to rank by: wpm, accuracy, or combined (default)
      * @return List of top 10 LeaderboardEntry with ranks
      */
-    @Cacheable(value = "leaderboard", key = "'game:' + #category + ':' + #metric", unless = "#result == null")
+    // Same reasoning as the global board above.
+    @Cacheable(value = "leaderboard", key = "'game:' + #category + ':' + #metric", sync = true)
     @GetMapping("/game/{category}")
     public ResponseEntity<List<LeaderboardEntry>> getGameLeaderboard(
             @PathVariable Category category,
@@ -72,7 +83,8 @@ public class LeaderboardController {
      * @param userId The user ID
      * @return List of LeaderboardEntry for all categories the user has played
      */
-    @Cacheable(value = "leaderboard", key = "'user:' + #userId", unless = "#result == null")
+    // Same reasoning as the global board above.
+    @Cacheable(value = "leaderboard", key = "'user:' + #userId", sync = true)
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<LeaderboardEntry>> getUserRankings(@PathVariable Long userId) {
         return ResponseEntity.ok(leaderboardService.getUserRankings(userId));

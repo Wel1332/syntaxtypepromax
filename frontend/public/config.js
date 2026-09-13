@@ -19,6 +19,10 @@
 // Remember the backend must also allow this site's origin: its FRONTEND_URL
 // environment variable feeds the CORS allow-list, and a mismatch shows up as a
 // 403 with no Access-Control-Allow-Origin header rather than a useful message.
+// Currently a Cloudflare quick tunnel to the backend running on a desktop.
+// Quick tunnels get a NEW hostname every time cloudflared restarts, so if the
+// site suddenly cannot reach the backend, check this value against whatever
+// cloudflared last printed before looking anywhere else.
 window.__SYNTAXTYPE_CONFIG__ = {
-    apiBaseUrl: ""
+    apiBaseUrl: "https://audience-contained-doll-solomon.trycloudflare.com"
 };

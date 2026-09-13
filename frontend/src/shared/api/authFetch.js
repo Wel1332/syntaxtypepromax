@@ -1,6 +1,8 @@
 import { getAuthToken } from '../auth/AuthUtils';
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
+// Imported rather than re-read from process.env: the base is resolved at runtime
+// now, and a second copy here would keep the build-time value and quietly send
+// half the app to the old backend.
+import { API_BASE } from './client';
 
 export function authFetch(path, options = {}) {
   const token = getAuthToken();

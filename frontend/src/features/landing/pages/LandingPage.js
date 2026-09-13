@@ -18,6 +18,16 @@ import { useThemeMode } from '../../../shared/theme/ThemeContext';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
 
+// How long the leaderboard panel waits before giving up.
+//
+// The backend sleeps when idle, and a cold instance has been measured taking
+// nearly a minute to answer -- with no deadline the panel sits on "Checking the
+// leaderboard..." for that entire time, on the first page a visitor ever sees.
+// The board is supporting detail here, not the reason anyone came, so it gets a
+// short budget and then shows its error state, which already tells the visitor
+// the server may still be waking up. A warm backend answers well inside this.
+const BOARD_TIMEOUT_MS = 8000;
+
 // ── Tokens ────────────────────────────────────────────────────────────────────
 // The page paints its own surfaces rather than reading the MUI palette, because
 // its treatment differs from the app chrome, but it follows the same light/dark
@@ -417,10 +427,16 @@ const LandingPage = () => {
     const [boardState, setBoardState] = useState('loading'); // loading | ok | empty | error
     useEffect(() => {
         let cancelled = false;
+        // AbortController plus a timer rather than AbortSignal.timeout(), which
+        // older Safari does not have — and the one browser that lacks it would be
+        // the one left hanging.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), BOARD_TIMEOUT_MS);
+
         (async () => {
             try {
                 // /global, not /global/all — the latter has never existed on the backend.
-                const res = await fetch(`${API_BASE}/api/leaderboards/global`);
+                const res = await fetch(`${API_BASE}/api/leaderboards/global`, { signal: controller.signal });
                 if (!res.ok) throw new Error('bad status');
                 const data = await res.json();
                 if (cancelled) return;
@@ -428,10 +444,21 @@ const LandingPage = () => {
                 setBoard(list);
                 setBoardState(list.length ? 'ok' : 'empty');
             } catch {
+                // Timeout, offline, DNS failure and a 500 all land here, and the
+                // visitor cannot act differently on any of them, so they share one
+                // message rather than being told which flavour of unavailable it is.
                 if (!cancelled) setBoardState('error');
+            } finally {
+                clearTimeout(timeout);
             }
         })();
-        return () => { cancelled = true; };
+
+        return () => {
+            cancelled = true;
+            // Abort, not just flag: leaving the request in flight holds a socket
+            // open against a backend that may still be starting up.
+            controller.abort();
+        };
     }, []);
 
     const top = useMemo(() => board.slice(0, 5), [board]);

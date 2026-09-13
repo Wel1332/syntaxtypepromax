@@ -31,6 +31,14 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>SyntaxType</title>
+    <!--
+      Runtime configuration. Deliberately a plain blocking script in <head>: it
+      must finish before the app bundle runs, because the bundle reads the
+      backend URL from it on first evaluation. Adding defer/async here would let
+      the app start with the config missing and silently fall back to the
+      build-time URL. Not hashed by the build, so it stays editable after deploy.
+    -->
+    <script src="%PUBLIC_URL%/config.js"></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

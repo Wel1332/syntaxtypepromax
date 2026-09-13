@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { getAuthToken } from '../auth/AuthUtils';
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
+// See client.js: the backend URL is resolved at runtime, so this must not keep
+// its own build-time copy.
+import { API_BASE } from '../api/client';
 
 export const useScoreSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);

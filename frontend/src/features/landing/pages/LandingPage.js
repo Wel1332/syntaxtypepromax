@@ -16,7 +16,8 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import { useThemeMode } from '../../../shared/theme/ThemeContext';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
+// Resolved at runtime from public/config.js — see shared/api/client.js.
+import { API_BASE } from '../../../shared/api/client';
 
 // How long the leaderboard panel waits before giving up.
 //

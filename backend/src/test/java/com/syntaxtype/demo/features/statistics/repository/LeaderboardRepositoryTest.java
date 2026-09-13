@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
@@ -178,9 +179,72 @@ class LeaderboardRepositoryTest {
             List<Leaderboard> results = leaderboardRepository
                     .findTop10ByCategoryOrderByWordsPerMinuteDesc(category);
             
-            assertFalse(results.isEmpty(), 
+            assertFalse(results.isEmpty(),
                     "Should have results for category: " + category);
             assertEquals(category, results.get(0).getCategory());
         }
+    }
+
+    /**
+     * These cover findBestPerUserByMetric, which is native SQL and therefore not
+     * checked by the compiler at all. The service tests above it mock the
+     * repository, so without these the query's first execution would be against
+     * the live database on the endpoint that serves the public landing page.
+     */
+    @Test
+    @DisplayName("Should return one row per user, the user's best for the metric")
+    void shouldReturnBestEntryPerUser() {
+        User fast = createAndPersistUser("fast", "fast@test.com");
+        User slow = createAndPersistUser("slow", "slow@test.com");
+
+        // Two categories each, so the per-user reduction has something to collapse.
+        createAndPersistLeaderboard(fast, Category.TYPING_TESTS, 120, 90);
+        createAndPersistLeaderboard(fast, Category.CHALLENGES, 60, 70);
+        createAndPersistLeaderboard(slow, Category.TYPING_TESTS, 40, 99);
+        createAndPersistLeaderboard(slow, Category.CHALLENGES, 30, 60);
+
+        List<Leaderboard> byWpm =
+                leaderboardRepository.findBestPerUserByMetric("wpm", PageRequest.of(0, 10));
+
+        assertEquals(2, byWpm.size(), "one row per user, not one per user-category");
+        assertEquals(120, byWpm.get(0).getWordsPerMinute(), "best first");
+        assertEquals(40, byWpm.get(1).getWordsPerMinute());
+
+        // Accuracy ranks the same two users the other way round, which proves the
+        // metric argument actually reaches the ORDER BY rather than being ignored.
+        List<Leaderboard> byAccuracy =
+                leaderboardRepository.findBestPerUserByMetric("accuracy", PageRequest.of(0, 10));
+
+        assertEquals(2, byAccuracy.size());
+        assertEquals(99, byAccuracy.get(0).getAccuracy());
+        assertEquals(90, byAccuracy.get(1).getAccuracy());
+    }
+
+    @Test
+    @DisplayName("Should apply the row limit and rank combined score above raw WPM")
+    void shouldLimitAndRankByCombinedScore() {
+        // 100 wpm at 96% clears the >95 bonus: 100 * 0.96 * 1.5 = 144.
+        // 130 wpm at 80% does not: 130 * 0.80 = 104. So the slower typist wins.
+        User accurate = createAndPersistUser("accurate", "accurate@test.com");
+        User reckless = createAndPersistUser("reckless", "reckless@test.com");
+        createAndPersistLeaderboard(accurate, Category.TYPING_TESTS, 100, 96);
+        createAndPersistLeaderboard(reckless, Category.TYPING_TESTS, 130, 80);
+
+        List<Leaderboard> combined =
+                leaderboardRepository.findBestPerUserByMetric("combined", PageRequest.of(0, 10));
+
+        assertEquals(2, combined.size());
+        assertEquals("accurate", combined.get(0).getUser().getUsername(),
+                "the accuracy bonus should outrank raw speed");
+
+        List<Leaderboard> limited =
+                leaderboardRepository.findBestPerUserByMetric("combined", PageRequest.of(0, 1));
+        assertEquals(1, limited.size(), "the pageable limit must reach the SQL");
+    }
+
+    @Test
+    @DisplayName("Should return an empty list when there are no entries")
+    void shouldReturnEmptyWhenNoEntries() {
+        assertTrue(leaderboardRepository.findBestPerUserByMetric("combined", PageRequest.of(0, 10)).isEmpty());
     }
 }

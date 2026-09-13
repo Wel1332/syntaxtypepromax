@@ -77,6 +77,44 @@ public interface LeaderboardRepository extends JpaRepository<Leaderboard, Long> 
     List<Leaderboard> findTopByWordsPerMinute();
 
     /**
+     * Retrieves each user's single best entry across all categories, ordered by the
+     * requested metric, limited by the pageable.
+     *
+     * <p>This replaces reading the whole table and reducing it in Java. The window
+     * function picks one row per user in the database, so the work no longer grows
+     * with the number of rows the app accumulates, and only the rows actually
+     * returned are transferred.
+     *
+     * <p>Every branch of the metric expression is multiplied out to a decimal so the
+     * CASE arms share one type; mixing the integer columns with the combined-score
+     * arithmetic otherwise leaves the comparison type up to the database.
+     *
+     * @param metric   One of "wpm", "accuracy", or anything else for combined score
+     * @param pageable Supplies the row limit
+     * @return One best entry per user, best first
+     */
+    @Query(value = """
+            SELECT t.leaderboard_id, t.user_id, t.words_per_minute, t.accuracy,
+                   t.total_words_typed, t.total_time_spent, t.score, t.category
+            FROM (
+                SELECT l.*, ROW_NUMBER() OVER (
+                    PARTITION BY l.user_id
+                    ORDER BY (CASE WHEN :metric = 'wpm' THEN l.words_per_minute * 1.0
+                                   WHEN :metric = 'accuracy' THEN l.accuracy * 1.0
+                                   WHEN l.accuracy > 95 THEN l.words_per_minute * (l.accuracy / 100.0) * 1.5
+                                   ELSE l.words_per_minute * (l.accuracy / 100.0) END) DESC
+                ) AS rn
+                FROM leaderboards l
+            ) t
+            WHERE t.rn = 1
+            ORDER BY (CASE WHEN :metric = 'wpm' THEN t.words_per_minute * 1.0
+                           WHEN :metric = 'accuracy' THEN t.accuracy * 1.0
+                           WHEN t.accuracy > 95 THEN t.words_per_minute * (t.accuracy / 100.0) * 1.5
+                           ELSE t.words_per_minute * (t.accuracy / 100.0) END) DESC
+            """, nativeQuery = true)
+    List<Leaderboard> findBestPerUserByMetric(@Param("metric") String metric, Pageable pageable);
+
+    /**
      * Retrieves top N leaderboard entries for a category ordered by WPM descending.
      * Optimized for rank calculation in typing games.
      *

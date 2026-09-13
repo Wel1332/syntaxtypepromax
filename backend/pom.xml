@@ -43,6 +43,21 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<!--
+			Caching. The @Cacheable annotations on LeaderboardController predate
+			these two and did nothing: without a cache starter and @EnableCaching,
+			Spring never proxies the method, so every request went to the database
+			while the annotation implied otherwise. Caffeine rather than the default
+			ConcurrentMap so the entries can actually expire.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

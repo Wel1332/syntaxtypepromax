@@ -24,5 +24,5 @@
 // site suddenly cannot reach the backend, check this value against whatever
 // cloudflared last printed before looking anywhere else.
 window.__SYNTAXTYPE_CONFIG__ = {
-    apiBaseUrl: "https://audience-contained-doll-solomon.trycloudflare.com"
+    apiBaseUrl: "https://pdas-trails-mercy-bears.trycloudflare.com"
 };

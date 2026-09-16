@@ -24,5 +24,5 @@
 // site suddenly cannot reach the backend, check this value against whatever
 // cloudflared last printed before looking anywhere else.
 window.__SYNTAXTYPE_CONFIG__ = {
-    apiBaseUrl: "https://gazette-yard-the-positioning.trycloudflare.com"
+    apiBaseUrl: "https://websites-circle-norman-phillips.trycloudflare.com"
 };

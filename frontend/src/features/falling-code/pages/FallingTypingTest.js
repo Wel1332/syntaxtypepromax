@@ -172,6 +172,14 @@ const FallingTypingTest = () => {
     const speedRef = useRef(1);
     const inputRef = useRef("");
     const hiddenInputRef = useRef(null);
+
+    // Focus the capture textarea WITHOUT scrolling. That textarea is 1x1,
+    // opacity 0 and absolutely positioned, and a bare focus() scrolls it into
+    // view — which yanked the page upward every time the player clicked the
+    // falling-code area. preventScroll keeps the caret without moving the page.
+    const focusInput = useCallback(() => {
+        hiddenInputRef.current?.focus({ preventScroll: true });
+    }, []);
     const gameOverRef = useRef(false);
     const scoreRef = useRef(0);
     const gameDurationRef = useRef(60);
@@ -275,7 +283,7 @@ const FallingTypingTest = () => {
         setPersonalBest(loadPB(c.challengeId || c.id));
         resetGameState(dur, ml, useL);
         setView("playing");
-        setTimeout(() => hiddenInputRef.current?.focus(), 50);
+        setTimeout(focusInput, 50);
     };
 
     // Faculty-authored bug templates, falling back to the built-in ones
@@ -715,7 +723,7 @@ const FallingTypingTest = () => {
             }
             return next;
         });
-        hiddenInputRef.current?.focus();
+        focusInput();
     };
 
     const handleRestart = () => {
@@ -1119,7 +1127,7 @@ const FallingTypingTest = () => {
 
             {/* Game area */}
             <Box
-                onClick={() => hiddenInputRef.current?.focus()}
+                onClick={focusInput}
                 sx={{
                     position: "relative",
                     width: "100%",
@@ -1324,7 +1332,6 @@ const FallingTypingTest = () => {
                 value={currentInput}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                autoFocus
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
@@ -1343,7 +1350,13 @@ const FallingTypingTest = () => {
 
             {/* Visible input indicator + controls */}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center" justifyContent="space-between">
+                {/* Looks like a text field, so players click it to start typing.
+                    It only displays currentInput — the real input is the hidden
+                    textarea — so without this handler a click landed on a dead
+                    element and blurred the textarea, leaving the player unable
+                    to type at all. */}
                 <Box
+                    onClick={focusInput}
                     sx={{
                         flexGrow: 1,
                         minHeight: 48,
@@ -1357,6 +1370,7 @@ const FallingTypingTest = () => {
                         fontSize: "1.1rem",
                         color: "text.primary",
                         width: "100%",
+                        cursor: "text",
                     }}
                 >
                     {currentInput || (

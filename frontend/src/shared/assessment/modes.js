@@ -3,12 +3,17 @@
 // the canonical "remarks" tiering all live here so every game tells the
 // student the same story.
 //
-// Storage is localStorage-only for now — when the backend Score entity gains
-// a `modeType` column (Category 2) the read/write helpers below get swapped
-// for an authFetch call without touching any consumer.
+// localStorage is a CACHE, not the record. The authoritative attempt count is
+// on the server: every finished Pre/Post-Test attempt writes a Score row
+// carrying its modeType, so "how many attempts has this student used" is just
+// "how many of their Score rows match this game + mode". Call
+// syncAttemptsFromServer() on mount before trusting the local count —
+// see the comment on that function for why.
 
 import { getUserId } from "../auth/JwtUtils";
 import { getAuthToken } from "../auth/AuthUtils";
+import { API_BASE } from "../api/client";
+import { authFetch } from "../api/authFetch";
 
 export const MODE = {
     PRE_TEST: "PRE_TEST",
@@ -65,6 +70,12 @@ const userScope = () => {
 
 const ATTEMPTS_KEY = (game, mode) => `assess:${userScope()}:attempts:${game}:${mode}`;
 const SCORES_KEY = (game, mode) => `assess:${userScope()}:scores:${game}:${mode}`;
+// Last server-side attempt count observed by syncAttemptsFromServer().
+const SERVER_SEEN_KEY = (game, mode) => `assess:${userScope()}:seen:${game}:${mode}`;
+// Server count at the moment a teacher last reset this mode. Server rows are
+// never deleted, so a reset cannot lower the server's count — it records where
+// to start counting from instead. See resetMode().
+const RESET_BASE_KEY = (game, mode) => `assess:${userScope()}:resetbase:${game}:${mode}`;
 
 // One-time cleanup of legacy un-scoped keys (`assess:attempts:…` /
 // `assess:scores:…`) left by the pre-user-scoping version. These were the
@@ -115,6 +126,89 @@ export const isModeLocked = (game, mode) =>
 export const canStartMode = (game, mode) =>
     !isModeLocked(game, mode) && attemptsRemaining(game, mode) > 0;
 
+// Maps a GAME to the challengeType its scores are submitted under, so a
+// server-side Score row can be attributed back to the game that produced it.
+// These strings are the contract with the backend — they must match the
+// literals the games pass to submitScore().
+const CHALLENGE_TYPE = {
+    [GAME.SNIPER]: "SYNTAX_SAVER",
+    [GAME.TRANSLATION]: "CODE_CHALLENGES",
+    [GAME.FALLING]: "FALLING_WORDS",
+};
+
+// Modes whose attempt count is capped and therefore worth reconciling.
+// PRACTICE is unlimited, so counting it would be wasted work.
+const LIMITED_MODES = [MODE.PRE_TEST, MODE.POST_TEST];
+
+/**
+ * Reconcile the local attempt counters against the student's own score rows.
+ *
+ * Without this, attempt limits are per-BROWSER rather than per-student: a
+ * student who opened the site on a phone, a lab machine, or a fresh profile
+ * got a clean set of Pre-Test and Post-Test attempts, because the only record
+ * of the attempts they had already used lived in the other device's
+ * localStorage. That silently breaks the "one shot" Pre-Test the study
+ * depends on.
+ *
+ * Counts only ever move UP. If the local counter is higher than the server's,
+ * an attempt was played whose score submission failed — that is still an
+ * attempt, and lowering the count to match the server would hand the student a
+ * free retry.
+ *
+ * Returns true when the counters were reconciled, false when the fetch failed
+ * (offline, expired token). On false the caller keeps the local counts: a
+ * network blip must not unlock a fresh Pre-Test.
+ */
+export const syncAttemptsFromServer = async () => {
+    let scores;
+    try {
+        const res = await authFetch(`${API_BASE}/api/scores/me`);
+        if (!res.ok) return false;
+        scores = await res.json();
+    } catch {
+        return false;
+    }
+    if (!Array.isArray(scores)) return false;
+
+    const rowsByKey = new Map();
+    for (const s of scores) {
+        if (!s?.challengeType || !s?.modeType) continue;
+        const key = `${s.challengeType}|${s.modeType}`;
+        if (!rowsByKey.has(key)) rowsByKey.set(key, []);
+        rowsByKey.get(key).push(s);
+    }
+
+    for (const game of Object.values(GAME)) {
+        const challengeType = CHALLENGE_TYPE[game];
+        if (!challengeType) continue;
+        for (const mode of LIMITED_MODES) {
+            const rows = rowsByKey.get(`${challengeType}|${mode}`) || [];
+            // Remember what the server reported so a later teacher reset can
+            // use it as its baseline.
+            safeWrite(SERVER_SEEN_KEY(game, mode), String(rows.length));
+
+            // Oldest first, so dropping the pre-reset rows drops the right ones.
+            const base = Number(safeRead(RESET_BASE_KEY(game, mode), "0")) || 0;
+            const ordered = rows
+                .map((r) => ({ score: Number(r.score) || 0, at: Date.parse(r.submittedAt) || 0 }))
+                .sort((a, b) => a.at - b.at)
+                .slice(base);
+
+            if (ordered.length > getAttempts(game, mode)) {
+                safeWrite(ATTEMPTS_KEY(game, mode), String(ordered.length));
+            }
+            // Rebuild the Best/Low history too, so the picker shows the same
+            // record on every device rather than only what this browser saw.
+            // Guarded the same way as the counter: a local history longer than
+            // the server's holds attempts whose submission failed.
+            if (ordered.length > getScores(game, mode).length) {
+                safeWrite(SCORES_KEY(game, mode), JSON.stringify(ordered));
+            }
+        }
+    }
+    return true;
+};
+
 export const getScores = (game, mode) => {
     const raw = safeRead(SCORES_KEY(game, mode), "[]");
     try {
@@ -148,10 +242,20 @@ export const getHighLow = (game, mode) => {
     };
 };
 
+// Teacher override. The student's Score rows stay on the server — they are
+// study data and are never deleted from here — so clearing the local counter
+// alone would be undone by the next syncAttemptsFromServer(). Recording the
+// current server count as a baseline lets the sync count only attempts made
+// AFTER the reset, which is what "reset their attempts" is meant to mean.
 export const resetMode = (game, mode) => {
     try {
+        const seen = safeRead(SERVER_SEEN_KEY(game, mode), null);
+        // Fall back to the local count when no sync has run yet this session;
+        // it is the best available estimate of what the server holds.
+        const baseline = seen != null ? seen : String(getAttempts(game, mode));
         localStorage.removeItem(ATTEMPTS_KEY(game, mode));
         localStorage.removeItem(SCORES_KEY(game, mode));
+        safeWrite(RESET_BASE_KEY(game, mode), baseline);
     } catch {}
 };
 

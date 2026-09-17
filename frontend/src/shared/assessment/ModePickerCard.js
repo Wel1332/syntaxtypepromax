@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     Box, Card, CardContent, Stack, Typography, Button, Chip, Tooltip, Divider,
 } from "@mui/material";
@@ -7,6 +7,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
     MODE, MODE_META, attemptsRemaining, getAttempts, getHighLow, isModeLocked, resetMode,
+    syncAttemptsFromServer,
 } from "./modes";
 import { getAuthToken } from "../auth/AuthUtils";
 import { getUserRole } from "../auth/JwtUtils";
@@ -30,6 +31,22 @@ const canResetAttempts = () => {
 // commits to a mode that still has attempts left.
 export default function ModePickerCard({ game, onPick, title = "Choose your mode", subtitle }) {
     const showReset = canResetAttempts();
+
+    // Attempt counts are read synchronously while rendering, so the server
+    // reconcile has to finish before the Start buttons mean anything. Every
+    // game routes its Pre/Post-Test through this picker, so doing it here
+    // covers all three. Until it resolves the buttons stay disabled: showing
+    // them against a stale device-local count is the bug being fixed, and a
+    // student who clicks fast would otherwise slip straight past the limit.
+    const [attemptsSynced, setAttemptsSynced] = useState(false);
+    useEffect(() => {
+        let cancelled = false;
+        syncAttemptsFromServer().finally(() => {
+            if (!cancelled) setAttemptsSynced(true);
+        });
+        return () => { cancelled = true; };
+    }, []);
+
     return (
         <Card>
             <CardContent>
@@ -139,7 +156,7 @@ export default function ModePickerCard({ game, onPick, title = "Choose your mode
                                     <Button
                                         fullWidth
                                         variant="contained"
-                                        disabled={blocked}
+                                        disabled={blocked || !attemptsSynced}
                                         onClick={() => onPick(m)}
                                         sx={{
                                             mt: 1.5,
@@ -148,11 +165,13 @@ export default function ModePickerCard({ game, onPick, title = "Choose your mode
                                             "&:hover": { bgcolor: meta.color, opacity: 0.9 },
                                         }}
                                     >
-                                        {locked ? "Pre-Test required" : blocked ? "Limit reached" : "Start"}
+                                        {!attemptsSynced
+                                            ? "Checking attempts…"
+                                            : locked ? "Pre-Test required" : blocked ? "Limit reached" : "Start"}
                                     </Button>
 
                                     {showReset && attempts > 0 && meta.attemptLimit !== Infinity && (
-                                        <Tooltip title="Teacher override — clears this mode's attempt counter and stored scores for the student signed in on this device.">
+                                        <Tooltip title="Teacher override — gives the student a fresh set of attempts in this mode. Their submitted scores stay on record. Applies on this device only, so run it on the machine the student will use.">
                                             <Button
                                                 size="small"
                                                 fullWidth
@@ -167,7 +186,7 @@ export default function ModePickerCard({ game, onPick, title = "Choose your mode
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     const ok = window.confirm(
-                                                        `Reset ${meta.label} attempts for the student signed in on this device? This wipes the attempt counter and stored scores for this mode.`
+                                                        `Give the student signed in on this device a fresh set of ${meta.label} attempts? Their already-submitted scores stay on record; only the attempt allowance is reset, and only on this device.`
                                                     );
                                                     if (!ok) return;
                                                     resetMode(game, m);

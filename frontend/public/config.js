@@ -19,10 +19,23 @@
 // Remember the backend must also allow this site's origin: its FRONTEND_URL
 // environment variable feeds the CORS allow-list, and a mismatch shows up as a
 // 403 with no Access-Control-Allow-Origin header rather than a useful message.
-// Currently a Cloudflare quick tunnel to the backend running on a desktop.
-// Quick tunnels get a NEW hostname every time cloudflared restarts, so if the
-// site suddenly cannot reach the backend, check this value against whatever
-// cloudflared last printed before looking anywhere else.
+//
+// Currently the Render deployment, so the site works for anyone at any time
+// without a machine on the desk. Render's free plan SLEEPS after 15 minutes
+// idle: the first request after that takes 50s-3.5min (measured 212s on
+// 2026-09-17) while the container cold-starts, then settles to ~0.14s. The
+// landing page's leaderboard fetch gives up after 8 seconds, so the first load
+// after an idle period shows an empty board even though the backend is fine --
+// reload once it has woken. If you need it responsive for a demo, hit
+// https://syntaxtype-backend.onrender.com/api/leaderboards/global a few minutes
+// beforehand to wake it.
+//
+// The alternative is a Cloudflare quick tunnel to the desktop backend, which is
+// fast and never sleeps but only runs while that machine is on, and hands out a
+// NEW hostname every time cloudflared restarts. If you switch back, paste the
+// hostname cloudflared printed here -- a stale tunnel hostname in this file is
+// the most common cause of "the site cannot reach the backend" and looks
+// exactly like an outage.
 window.__SYNTAXTYPE_CONFIG__ = {
-    apiBaseUrl: "https://websites-circle-norman-phillips.trycloudflare.com"
+    apiBaseUrl: "https://syntaxtype-backend.onrender.com"
 };

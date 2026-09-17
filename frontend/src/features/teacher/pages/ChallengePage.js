@@ -104,7 +104,7 @@ export default function ChallengePage() {
           <nav className="menu-links">
             <Link to="/typingtest" onClick={toggleMenu}>Typing Test</Link>
             <Link to="/bookworm" onClick={toggleMenu}>Bookworm</Link>
-            <Link to="/galaxy" onClick={toggleMenu}>Galaxy</Link>
+            <Link to="/galaxy-new" onClick={toggleMenu}>Galaxy</Link>
             <Link to="/instructor" onClick={toggleMenu}>Instructor Module</Link>
             <Link to="/challenges" onClick={toggleMenu}>Challenges</Link>
             <Link to="/lesson" onClick={toggleMenu}>Create Lesson</Link>

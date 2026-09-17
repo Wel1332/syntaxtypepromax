@@ -175,7 +175,7 @@ const MODES = [
         desc: 'Catch keywords before they hit the ground, then survive the Bug Bash.',
     },
     {
-        kicker: 'Adventure', title: 'Galaxy Mode', to: '/galaxy', accent: BRAND.pink,
+        kicker: 'Adventure', title: 'Galaxy Mode', to: '/galaxy-new', accent: BRAND.pink,
         icon: <RocketLaunchIcon fontSize="small" />,
         desc: 'Blast through space challenges that turn practice into a full campaign.',
     },

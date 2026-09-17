@@ -1,6 +1,5 @@
 package com.syntaxtype.demo.features.lesson.controller;
 
-import com.syntaxtype.demo.features.lesson.dto.ScoreDTO;
 import com.syntaxtype.demo.features.statistics.dto.LeaderboardUpdateResult;
 import com.syntaxtype.demo.features.statistics.dto.ScoreSubmissionRequest;
 import com.syntaxtype.demo.core.enums.Category;
@@ -63,31 +62,19 @@ public class ScoreController {
         this.achievementEvaluatorService = achievementEvaluatorService;
         this.userRepository = userRepository;
     }
-    @PostMapping
-    public ResponseEntity<Score> submitScore(@RequestBody ScoreDTO scoreDTO) {
-        Score score = new Score();
-        score.setScore(scoreDTO.getScore());
-        score.setTimeInSeconds(scoreDTO.getTimeInSeconds());
-        score.setChallengeType(scoreDTO.getChallengeType());
-        score.setWpm(scoreDTO.getWpm());
-        score.setSubmittedAt(LocalDateTime.now());
-
-        return ResponseEntity.ok(scoreService.saveScore(score));
-    }
-
-
-    @PostMapping("/falling")
-    public ResponseEntity<Score> submitFallingScore(@RequestBody ScoreDTO req) {
-        Score score = new Score();
-        score.setScore(req.getScore());
-        score.setTimeInSeconds(req.getTimeInSeconds());
-        score.setChallengeType("falling");
-        score.setWpm(req.getWpm());
-        score.setSubmittedAt(LocalDateTime.now());
-
-        return ResponseEntity.ok(scoreService.saveScore(score));
-    }
+    /**
+     * Aggregate of every user's scores — study data, so staff-only. Students
+     * read their own history via GET /api/scores/me.
+     *
+     * The old POST /api/scores and POST /api/scores/falling write endpoints and
+     * the GET /api/scores/falling read were removed: the writes set no user and
+     * skipped the modeType / drill-cap rules, so any authenticated caller could
+     * inject orphan rows into the scores table the study measures, and the
+     * frontend never called any of the three. Every score write now goes through
+     * POST /api/scores/{category}, which binds the row to the authenticated user.
+     */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     public List<Score> getAllScores() {
         return scoreService.getAllScores();
     }
@@ -97,12 +84,6 @@ public class ScoreController {
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT','USER')")
     public ResponseEntity<List<Score>> getMyScores(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(scoreRepository.findByUserOrderBySubmittedAtDesc(userDetails.getUser()));
-    }
-
-    // Get all falling scores
-    @GetMapping("/falling")
-    public List<Score> getFallingScores() {
-        return scoreService.getScoresByTypeDesc("falling");
     }
 
     /**

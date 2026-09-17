@@ -15,7 +15,16 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 
-    private static final long EXPIRATION_TIME = 86400000;
+    // Token lifetime in milliseconds. Read from the jwt.expiration property
+    // (override with the JWT_EXPIRATION env var) instead of a hardcoded constant,
+    // which had frozen every token at 24h and left jwt.expiration dead config.
+    // Default 12h: there is no refresh-token flow, so the token must outlast a
+    // full classroom session (pre-test + practice + post-test) or students get
+    // logged out mid-study; 12h covers a school day while halving the old 24h
+    // window a stolen token stays valid. Set JWT_EXPIRATION lower once a refresh
+    // flow exists.
+    @Value("${jwt.expiration:43200000}")
+    private long expirationMs;
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
@@ -28,7 +37,7 @@ public class JwtUtil {
                 .claim("id", userId)
                 .claim("isTempPassword", isTempPassword) // Add the isTempPassword claim
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -74,72 +83,3 @@ public class JwtUtil {
         return extractClaims(token).getExpiration().before(new Date());
     }
 }
-
-
-/*
-package com.syntaxtype.demo.core.security;
-
-import java.util.Date;
-
-import javax.crypto.SecretKey;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-
-@Component
-public class JwtUtil {
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
-
-    private static final long EXPIRATION_TIME = 86400000;
-
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-    }
-
-    public String generateToken(String username, String role, Long userId) {
-        return Jwts.builder()
-                    .subject(username)
-                    .claim("role", role)
-                    .claim("id", userId)
-                    .issuedAt(new Date())
-                    .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                    .signWith(getSigningKey())
-                    .compact();
-    }
-
-    public Claims validateToken(String token) {
-        try {
-            return Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new RuntimeException("Invalid JWT token", e);
-        }
-    }
-
-    public Claims extractClaims(String token) {
-        return Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-    }
-
-    public String extractUsername(String token) {
-        return extractClaims(token).getSubject();
-    }
-
-    public String extractRole(String token) {
-        return (String) extractClaims(token).get("role");
-    }
-
-    public boolean isTokenExpired(String token) {
-        return extractClaims(token).getExpiration().before(new Date());
-    }
-}*/

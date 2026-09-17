@@ -65,6 +65,7 @@ export default function TranslationTerminal() {
     const [promptsAnswered, setPromptsAnswered] = useState(0);
     const [promptsCorrect, setPromptsCorrect] = useState(0);
     const [recorded, setRecorded] = useState(false);
+    const [pasteBlocked, setPasteBlocked] = useState(false);
 
     const navigate = useNavigate();
     const { submitScore, submitSuccess, submitMessage, snackbarOpen, setSnackbarOpen } = useScoreSubmission();
@@ -72,8 +73,23 @@ export default function TranslationTerminal() {
     const inputRef = useRef(null);
     const viewRef = useRef(view);
     const recordedRef = useRef(recorded);
+    const pasteHintRef = useRef(null);
     useEffect(() => { viewRef.current = view; }, [view]);
     useEffect(() => { recordedRef.current = recorded; }, [recorded]);
+    useEffect(() => () => clearTimeout(pasteHintRef.current), []);
+
+    // The answer box measures whether the student can WRITE the C statement, so
+    // the answer has to be typed. Paste, drag-drop and cut/copy are all blocked:
+    // paste and drop would let a model answer in from another tab, and copy/cut
+    // would let one student hand their answer to the next. This covers the
+    // ordinary routes (Ctrl/Cmd-V, right-click, middle-click, dragging text in)
+    // — it is an honesty measure, not a sandbox, and devtools still defeats it.
+    const blockClipboard = (e) => {
+        e.preventDefault();
+        setPasteBlocked(true);
+        clearTimeout(pasteHintRef.current);
+        pasteHintRef.current = setTimeout(() => setPasteBlocked(false), 2500);
+    };
 
     const enemy = enemies[enemyIdx];
 
@@ -661,7 +677,12 @@ export default function TranslationTerminal() {
                                     value={answer}
                                     onChange={(e) => setAnswer(e.target.value)}
                                     onKeyDown={onKey}
+                                    onPaste={blockClipboard}
+                                    onDrop={blockClipboard}
+                                    onCopy={blockClipboard}
+                                    onCut={blockClipboard}
                                     spellCheck={false}
+                                    autoComplete="off"
                                     placeholder="Type the C code here, then press Enter…"
                                     style={{
                                         width: "100%", minHeight: 80, padding: 12,
@@ -674,8 +695,13 @@ export default function TranslationTerminal() {
                                     }}
                                 />
                                 <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 2 }}>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Whitespace tolerant. Press Enter to attack.
+                                    <Typography
+                                        variant="caption"
+                                        color={pasteBlocked ? "error" : "text.secondary"}
+                                    >
+                                        {pasteBlocked
+                                            ? "Copy and paste are disabled — type your answer."
+                                            : "Whitespace tolerant. Press Enter to attack."}
                                     </Typography>
                                     <Button variant="contained" color="primary" onClick={onSubmit}>
                                         Attack

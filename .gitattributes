@@ -1,0 +1,5 @@
+# Shell scripts must keep LF or Linux (CI, Docker) fails with "bad interpreter: /bin/sh^M".
+# core.autocrlf=true on Windows would otherwise check them out as CRLF.
+*.sh        text eol=lf
+backend/mvnw text eol=lf
+*.cmd       text eol=crlf

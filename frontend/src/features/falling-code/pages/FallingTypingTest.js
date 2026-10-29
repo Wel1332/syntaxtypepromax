@@ -8,7 +8,7 @@ import { bugInjectionChance, getBugInjectionConfig } from "../data/bugInjectionC
 import { useGameBanks } from "../../../shared/api/useGameBanks";
 import ModePickerCard from "../../../shared/assessment/ModePickerCard";
 import {
-    MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
+    MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark, nextStepMessage,
 } from "../../../shared/assessment/modes";
 import {
     Box,
@@ -726,8 +726,14 @@ const FallingTypingTest = () => {
         focusInput();
     };
 
+    // Every way back into a round — Play Again, Pick another, the challenge
+    // list — is held to the same limits as the mode picker, Practice included
+    // now that it has a cap. `mode` is null for an unassessed play, which has
+    // no limits.
+    const canPlayAnotherRound = () => !mode || canStartMode(GAME.FALLING, mode);
+
     const handleRestart = () => {
-        if (!selectedChallenge) return;
+        if (!selectedChallenge || !canPlayAnotherRound()) return;
         startChallenge(selectedChallenge);
     };
 
@@ -1014,7 +1020,7 @@ const FallingTypingTest = () => {
                             return (
                                 <Box
                                     key={id}
-                                    onClick={() => startChallenge(c)}
+                                    onClick={() => { if (canPlayAnotherRound()) startChallenge(c); }}
                                     sx={{
                                         p: 2,
                                         borderRadius: 2,
@@ -1518,13 +1524,13 @@ const FallingTypingTest = () => {
                                 variant="outlined" color="primary" size="large"
                                 startIcon={<RestartAltIcon />}
                                 onClick={handleRestart}
-                                disabled={mode && mode !== MODE.PRACTICE && !canStartMode(GAME.FALLING, mode)}
+                                disabled={!canPlayAnotherRound()}
                             >
                                 Play Again
                             </Button>
                             {/* Choosing a different challenge (difficulty) is Practice-only;
                                 Pre/Post-Tests use a sealed, standardized challenge. */}
-                            {mode === MODE.PRACTICE && (
+                            {mode === MODE.PRACTICE && canPlayAnotherRound() && (
                                 <Button variant="text" color="primary" size="large" onClick={handleBackToPicker}>
                                     Pick another
                                 </Button>
@@ -1542,9 +1548,9 @@ const FallingTypingTest = () => {
                                 View My Stats
                             </Button>
                         </Stack>
-                        {mode && mode !== MODE.PRACTICE && !canStartMode(GAME.FALLING, mode) && (
+                        {nextStepMessage(GAME.FALLING, mode) && (
                             <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-                                No attempts remaining in {MODE_META[mode]?.label}. Switch to Practice to keep training.
+                                {nextStepMessage(GAME.FALLING, mode)}
                             </Typography>
                         )}
                     </Stack>

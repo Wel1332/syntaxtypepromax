@@ -27,6 +27,12 @@ export const GAME = {
     FALLING: "falling",
 };
 
+// Practice rounds a student must finish, after their Pre-Test, before the
+// Post-Test unlocks. Practice is capped at this many until the Post-Test is
+// taken, so every student gets the same dose; after it, Practice is unlimited.
+// Set by the team lead from GO1 ("≥35% fewer syntax errors after 20 sessions").
+export const REQUIRED_PRACTICE_ROUNDS = 20;
+
 export const MODE_META = {
     [MODE.PRE_TEST]: {
         key: MODE.PRE_TEST,
@@ -42,7 +48,7 @@ export const MODE_META = {
         key: MODE.PRACTICE,
         label: "Practice",
         short: "Practice",
-        description: "Drill the material until it sticks. Unlimited attempts, no record kept on the leaderboard.",
+        description: `Drill the material. ${REQUIRED_PRACTICE_ROUNDS} rounds unlock the Post-Test; unlimited after it. Not counted on the leaderboard.`,
         color: "#3ECF6A",
         attemptLimit: Infinity,
         icon: "🛠️",
@@ -52,9 +58,9 @@ export const MODE_META = {
         key: MODE.POST_TEST,
         label: "Post-Test (Final)",
         short: "Final",
-        description: "Final assessment — 2 attempts max. Best score counts.",
+        description: "Final assessment. One shot, no retries.",
         color: "#FFC700",
-        attemptLimit: 2,
+        attemptLimit: 1,
         icon: "🏁",
         iconSrc: "/assets/icons/posttest%20icon.png",
     },
@@ -76,6 +82,10 @@ const SERVER_SEEN_KEY = (game, mode) => `assess:${userScope()}:seen:${game}:${mo
 // never deleted, so a reset cannot lower the server's count — it records where
 // to start counting from instead. See resetMode().
 const RESET_BASE_KEY = (game, mode) => `assess:${userScope()}:resetbase:${game}:${mode}`;
+// Practice rounds finished AFTER the Pre-Test. Kept apart from the plain
+// Practice counter because practice played before the Pre-Test (possible
+// before the mode order was enforced) must not count toward the required dose.
+const PRACTICE_AFTER_PRE_KEY = (game) => `assess:${userScope()}:practiceAfterPre:${game}`;
 
 // One-time cleanup of legacy un-scoped keys (`assess:attempts:…` /
 // `assess:scores:…`) left by the pre-user-scoping version. These were the
@@ -109,22 +119,92 @@ export const getAttempts = (game, mode) => {
     return Number.isFinite(n) ? n : 0;
 };
 
+// True once the student has completed at least one Pre-Test for this game.
+export const isPreTestComplete = (game) => getAttempts(game, MODE.PRE_TEST) > 0;
+
+export const isPostTestComplete = (game) => getAttempts(game, MODE.POST_TEST) > 0;
+
+export const getPracticeRoundsAfterPreTest = (game) => {
+    const n = Number(safeRead(PRACTICE_AFTER_PRE_KEY(game), "0"));
+    return Number.isFinite(n) ? n : 0;
+};
+
+export const isPracticeComplete = (game) =>
+    getPracticeRoundsAfterPreTest(game) >= REQUIRED_PRACTICE_ROUNDS;
+
+// For display: how far through the required practice the student is, and
+// whether Practice has opened up for good.
+export const getPracticeProgress = (game) => ({
+    done: Math.min(getPracticeRoundsAfterPreTest(game), REQUIRED_PRACTICE_ROUNDS),
+    required: REQUIRED_PRACTICE_ROUNDS,
+    unlimited: isPostTestComplete(game),
+});
+
 export const attemptsRemaining = (game, mode) => {
+    // Practice is capped at the required dose until the Post-Test is taken.
+    if (mode === MODE.PRACTICE) {
+        if (isPostTestComplete(game)) return Infinity;
+        return Math.max(0, REQUIRED_PRACTICE_ROUNDS - getPracticeRoundsAfterPreTest(game));
+    }
     const limit = MODE_META[mode]?.attemptLimit ?? Infinity;
     if (limit === Infinity) return Infinity;
     return Math.max(0, limit - getAttempts(game, mode));
 };
 
-// True once the student has completed at least one Pre-Test for this game.
-export const isPreTestComplete = (game) => getAttempts(game, MODE.PRE_TEST) > 0;
+// Why a mode can't be started yet, or null if it can.
+export const LOCK = {
+    NEED_PRE_TEST: "NEED_PRE_TEST",
+    NEED_PRACTICE: "NEED_PRACTICE",
+    PRACTICE_DONE_TAKE_POST: "PRACTICE_DONE_TAKE_POST",
+};
 
-// The Post-Test is gated behind the Pre-Test: a student must establish a
-// baseline before they can be graded. Pre-Test and Practice are never locked.
-export const isModeLocked = (game, mode) =>
-    mode === MODE.POST_TEST && !isPreTestComplete(game);
+// The study order, per game:
+//   1. Pre-Test (one attempt). Practice and Post-Test are locked.
+//   2. Exactly REQUIRED_PRACTICE_ROUNDS Practice rounds. Post-Test still locked.
+//   3. Post-Test (one attempt). Practice pauses here, so every student
+//      reaches the Post-Test with the same amount of practice.
+//   4. After the Post-Test, Practice is unlimited.
+// Practice before the Pre-Test would contaminate the baseline, which is why
+// step 1 gates everything else.
+export const getLockReason = (game, mode) => {
+    if (mode === MODE.PRE_TEST) return null;
+    if (!isPreTestComplete(game)) return LOCK.NEED_PRE_TEST;
+    if (mode === MODE.PRACTICE && !isPostTestComplete(game) && isPracticeComplete(game)) {
+        return LOCK.PRACTICE_DONE_TAKE_POST;
+    }
+    if (mode === MODE.POST_TEST && !isPracticeComplete(game)) return LOCK.NEED_PRACTICE;
+    return null;
+};
+
+export const isModeLocked = (game, mode) => getLockReason(game, mode) !== null;
 
 export const canStartMode = (game, mode) =>
     !isModeLocked(game, mode) && attemptsRemaining(game, mode) > 0;
+
+// What a game's result screen should tell the student when they cannot replay
+// the mode they just finished, or null when they can. Shared so all games give
+// the same directions.
+export const nextStepMessage = (game, mode) => {
+    if (!mode || canStartMode(game, mode)) return null;
+    if (mode === MODE.PRE_TEST) {
+        return "Pre-Test done. Practice is now unlocked — go back to the mode picker to start.";
+    }
+    if (mode === MODE.PRACTICE) {
+        return `All ${REQUIRED_PRACTICE_ROUNDS} practice rounds done. The Post-Test is unlocked — go back to the mode picker to take it.`;
+    }
+    if (mode === MODE.POST_TEST) {
+        return "Post-Test done. Practice is now unlimited.";
+    }
+    return null;
+};
+
+// Server timestamps are LocalDateTime strings with up to 9 fractional digits.
+// Some browsers reject more than 3 when parsing, so trim to milliseconds first.
+const parseServerTime = (value) => {
+    if (typeof value !== "string") return 0;
+    const t = Date.parse(value.replace(/(\.\d{3})\d+/, "$1"));
+    return Number.isFinite(t) ? t : 0;
+};
 
 // Maps a GAME to the challengeType its scores are submitted under, so a
 // server-side Score row can be attributed back to the game that produced it.
@@ -136,9 +216,10 @@ const CHALLENGE_TYPE = {
     [GAME.FALLING]: "FALLING_WORDS",
 };
 
-// Modes whose attempt count is capped and therefore worth reconciling.
-// PRACTICE is unlimited, so counting it would be wasted work.
-const LIMITED_MODES = [MODE.PRE_TEST, MODE.POST_TEST];
+// Modes reconciled against the server. Pre-Test and Post-Test for their
+// attempt caps; Practice because it gates the Post-Test, so a student who
+// practised on another device must not find the Post-Test locked here.
+const SYNCED_MODES = [MODE.PRE_TEST, MODE.PRACTICE, MODE.POST_TEST];
 
 /**
  * Reconcile the local attempt counters against the student's own score rows.
@@ -181,7 +262,8 @@ export const syncAttemptsFromServer = async () => {
     for (const game of Object.values(GAME)) {
         const challengeType = CHALLENGE_TYPE[game];
         if (!challengeType) continue;
-        for (const mode of LIMITED_MODES) {
+        const orderedByMode = {};
+        for (const mode of SYNCED_MODES) {
             const rows = rowsByKey.get(`${challengeType}|${mode}`) || [];
             // Remember what the server reported so a later teacher reset can
             // use it as its baseline.
@@ -190,9 +272,10 @@ export const syncAttemptsFromServer = async () => {
             // Oldest first, so dropping the pre-reset rows drops the right ones.
             const base = Number(safeRead(RESET_BASE_KEY(game, mode), "0")) || 0;
             const ordered = rows
-                .map((r) => ({ score: Number(r.score) || 0, at: Date.parse(r.submittedAt) || 0 }))
+                .map((r) => ({ score: Number(r.score) || 0, at: parseServerTime(r.submittedAt) }))
                 .sort((a, b) => a.at - b.at)
                 .slice(base);
+            orderedByMode[mode] = ordered;
 
             if (ordered.length > getAttempts(game, mode)) {
                 safeWrite(ATTEMPTS_KEY(game, mode), String(ordered.length));
@@ -204,6 +287,17 @@ export const syncAttemptsFromServer = async () => {
             if (ordered.length > getScores(game, mode).length) {
                 safeWrite(SCORES_KEY(game, mode), JSON.stringify(ordered));
             }
+        }
+
+        // Only practice played after the Pre-Test counts toward the required
+        // rounds. Both timestamps come from the server's clock, so comparing
+        // them is safe. No Pre-Test on record means nothing counts yet.
+        const preAt = orderedByMode[MODE.PRE_TEST][0]?.at;
+        const practiceAfterPre = preAt == null
+            ? 0
+            : orderedByMode[MODE.PRACTICE].filter((r) => r.at > preAt).length;
+        if (practiceAfterPre > getPracticeRoundsAfterPreTest(game)) {
+            safeWrite(PRACTICE_AFTER_PRE_KEY(game), String(practiceAfterPre));
         }
     }
     return true;
@@ -224,6 +318,9 @@ export const getScores = (game, mode) => {
 export const recordAttempt = (game, mode, payload) => {
     const next = getAttempts(game, mode) + 1;
     safeWrite(ATTEMPTS_KEY(game, mode), String(next));
+    if (mode === MODE.PRACTICE && isPreTestComplete(game)) {
+        safeWrite(PRACTICE_AFTER_PRE_KEY(game), String(getPracticeRoundsAfterPreTest(game) + 1));
+    }
     const scores = getScores(game, mode);
     scores.push({ ...payload, at: Date.now() });
     safeWrite(SCORES_KEY(game, mode), JSON.stringify(scores));
@@ -256,6 +353,10 @@ export const resetMode = (game, mode) => {
         localStorage.removeItem(ATTEMPTS_KEY(game, mode));
         localStorage.removeItem(SCORES_KEY(game, mode));
         safeWrite(RESET_BASE_KEY(game, mode), baseline);
+        // A retaken Pre-Test starts a new baseline, so practice played before
+        // the retake no longer counts. The sync recomputes this from the
+        // retaken Pre-Test's timestamp once it exists.
+        if (mode === MODE.PRE_TEST) localStorage.removeItem(PRACTICE_AFTER_PRE_KEY(game));
     } catch {}
 };
 

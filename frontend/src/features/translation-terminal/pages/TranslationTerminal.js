@@ -18,7 +18,7 @@ import { tokensEqual } from "../../../shared/utils/codeCompare";
 import ModePickerCard from "../../../shared/assessment/ModePickerCard";
 import { useScoreSubmission } from "../../../shared/hooks/useScoreSubmission";
 import {
-    MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
+    MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark, nextStepMessage,
 } from "../../../shared/assessment/modes";
 
 /**
@@ -154,7 +154,16 @@ export default function TranslationTerminal() {
         setTimeout(() => inputRef.current?.focus(), 50);
     };
 
-    const restart = () => startCombat(enemyIdx);
+    // Rematch and "Next enemy" each start a new round, so they are held to the
+    // same limits as the mode picker — Practice included, now that it has a
+    // cap. The check lives here rather than in startCombat because the first
+    // round after picking a mode also goes through startCombat, before the
+    // `mode` state has caught up with the pick.
+    const playNextRound = (idx) => {
+        if (!canStartMode(GAME.TRANSLATION, mode)) return;
+        startCombat(idx);
+    };
+    const restart = () => playNextRound(enemyIdx);
 
     const backToModePicker = () => {
         setView("mode");
@@ -752,7 +761,7 @@ export default function TranslationTerminal() {
                                     startIcon={<RestartAltIcon />}
                                     variant="outlined"
                                     onClick={restart}
-                                    disabled={mode !== MODE.PRACTICE && !canStartMode(GAME.TRANSLATION, mode)}
+                                    disabled={!canStartMode(GAME.TRANSLATION, mode)}
                                 >
                                     Rematch
                                 </Button>
@@ -760,8 +769,8 @@ export default function TranslationTerminal() {
                                     <Button
                                         variant="contained"
                                         color="primary"
-                                        onClick={() => startCombat(enemyIdx + 1)}
-                                        disabled={mode !== MODE.PRACTICE && !canStartMode(GAME.TRANSLATION, mode)}
+                                        onClick={() => playNextRound(enemyIdx + 1)}
+                                        disabled={!canStartMode(GAME.TRANSLATION, mode)}
                                     >
                                         Next enemy →
                                     </Button>
@@ -776,9 +785,9 @@ export default function TranslationTerminal() {
                                     View My Stats
                                 </Button>
                             </Stack>
-                            {mode !== MODE.PRACTICE && !canStartMode(GAME.TRANSLATION, mode) && (
+                            {nextStepMessage(GAME.TRANSLATION, mode) && (
                                 <Typography variant="caption" sx={{ mt: 2, display: "block", color: "text.secondary" }}>
-                                    No attempts remaining in {MODE_META[mode]?.label}. Drill in Practice mode to keep training.
+                                    {nextStepMessage(GAME.TRANSLATION, mode)}
                                 </Typography>
                             )}
                         </CardContent>

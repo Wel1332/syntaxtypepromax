@@ -6,11 +6,33 @@ import LockIcon from "@mui/icons-material/Lock";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
-    MODE, MODE_META, attemptsRemaining, getAttempts, getHighLow, isModeLocked, resetMode,
-    syncAttemptsFromServer,
+    MODE, MODE_META, LOCK, attemptsRemaining, getAttempts, getHighLow, getLockReason,
+    getPracticeProgress, resetMode, syncAttemptsFromServer,
 } from "./modes";
 import { getAuthToken } from "../auth/AuthUtils";
 import { getUserRole } from "../auth/JwtUtils";
+
+// What a locked card tells the student: the chip says what to do, the button
+// says what is missing.
+const lockText = (reason, practice) => {
+    const left = practice.required - practice.done;
+    switch (reason) {
+        case LOCK.NEED_PRE_TEST:
+            return { chip: "Take the Pre-Test first", button: "Pre-Test required" };
+        case LOCK.NEED_PRACTICE:
+            return {
+                chip: `Finish ${left} more practice round${left === 1 ? "" : "s"} first`,
+                button: "Practice required",
+            };
+        case LOCK.PRACTICE_DONE_TAKE_POST:
+            return {
+                chip: `All ${practice.required} rounds done — take the Post-Test`,
+                button: "Post-Test next",
+            };
+        default:
+            return { chip: "Locked", button: "Locked" };
+    }
+};
 
 // Only staff can clear a student's Pre/Post attempts. Students who burned
 // through their tries have to ask a teacher to reset them — there is no
@@ -62,13 +84,20 @@ export default function ModePickerCard({ game, onPick, title = "Choose your mode
                         const remaining = attemptsRemaining(game, m);
                         const attempts = getAttempts(game, m);
                         const stats = getHighLow(game, m);
-                        const locked = isModeLocked(game, m); // Post-Test before Pre-Test
+                        const lockReason = getLockReason(game, m);
+                        const locked = lockReason !== null;
                         const blocked = locked || remaining === 0;
+                        const practice = getPracticeProgress(game);
+                        const lock = locked ? lockText(lockReason, practice) : null;
                         const limitText = locked
-                            ? "Take the Pre-Test first"
-                            : meta.attemptLimit === Infinity
-                                ? "Unlimited attempts"
-                                : `${remaining} / ${meta.attemptLimit} attempts left`;
+                            ? lock.chip
+                            : m === MODE.PRACTICE
+                                ? practice.unlimited
+                                    ? "Unlimited practice"
+                                    : `${practice.done} / ${practice.required} practice rounds done`
+                                : meta.attemptLimit === Infinity
+                                    ? "Unlimited attempts"
+                                    : `${remaining} / ${meta.attemptLimit} attempts left`;
                         return (
                             <Card
                                 key={m}
@@ -127,10 +156,10 @@ export default function ModePickerCard({ game, onPick, title = "Choose your mode
                                             label={limitText}
                                             icon={blocked ? <LockIcon sx={{ fontSize: 14 }} /> : undefined}
                                             color={
-                                                meta.attemptLimit === Infinity
-                                                    ? "success"
-                                                    : blocked
-                                                        ? "default"
+                                                blocked
+                                                    ? "default"
+                                                    : meta.attemptLimit === Infinity
+                                                        ? "success"
                                                         : "warning"
                                             }
                                             variant="outlined"
@@ -167,7 +196,7 @@ export default function ModePickerCard({ game, onPick, title = "Choose your mode
                                     >
                                         {!attemptsSynced
                                             ? "Checking attempts…"
-                                            : locked ? "Pre-Test required" : blocked ? "Limit reached" : "Start"}
+                                            : locked ? lock.button : blocked ? "Limit reached" : "Start"}
                                     </Button>
 
                                     {showReset && attempts > 0 && meta.attemptLimit !== Infinity && (
@@ -206,9 +235,11 @@ export default function ModePickerCard({ game, onPick, title = "Choose your mode
                 <Box sx={{ mt: 2, p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
                     <Typography variant="caption" color="text.secondary">
                         <strong>How this works:</strong> Take the <em>Pre-Test</em> first to set a
-                        baseline, then drill in <em>Practice</em>, and finish with the <em>Post-Test
-                        (Final)</em> when you're ready to be graded. Practice and Test use different
-                        question banks — you won't see the same items twice.
+                        baseline — that unlocks <em>Practice</em>. Finish{" "}
+                        {getPracticeProgress(game).required} Practice rounds to unlock the{" "}
+                        <em>Post-Test (Final)</em>. Each test is one attempt only. After the
+                        Post-Test, Practice is unlimited. Practice and Test use different question
+                        banks — you won't see the same items twice.
                     </Typography>
                 </Box>
             </CardContent>

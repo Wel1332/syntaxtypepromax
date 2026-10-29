@@ -12,7 +12,7 @@ import { practiceBank, testBank } from "../data/syntaxSniperDrills";
 import { useGameBanks } from "../../../shared/api/useGameBanks";
 import ModePickerCard from "../../../shared/assessment/ModePickerCard";
 import {
-    MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark,
+    MODE, GAME, MODE_META, canStartMode, recordAttempt, getHighLow, getRemark, nextStepMessage,
 } from "../../../shared/assessment/modes";
 import { useScoreSubmission } from "../../../shared/hooks/useScoreSubmission";
 
@@ -171,7 +171,9 @@ export default function SyntaxSniper() {
     };
 
     const restart = () => {
-        if (!mode) return;
+        // Replays start a new round, so they are held to the same limits as
+        // the mode picker — Practice included, now that it has a cap.
+        if (!mode || !canStartMode(GAME.SNIPER, mode)) return;
         const deck = buildSession(mode, banks);
         setSession(deck);
         setScore(0);
@@ -501,7 +503,7 @@ export default function SyntaxSniper() {
                                     variant="contained"
                                     color="primary"
                                     onClick={restart}
-                                    disabled={mode !== MODE.PRACTICE && !canStartMode(GAME.SNIPER, mode)}
+                                    disabled={!canStartMode(GAME.SNIPER, mode)}
                                 >
                                     Play again
                                 </Button>
@@ -517,9 +519,9 @@ export default function SyntaxSniper() {
                                     View My Stats
                                 </Button>
                             </Stack>
-                            {mode !== MODE.PRACTICE && !canStartMode(GAME.SNIPER, mode) && (
+                            {nextStepMessage(GAME.SNIPER, mode) && (
                                 <Typography variant="caption" sx={{ mt: 2, display: "block", color: "text.secondary" }}>
-                                    No attempts remaining in {MODE_META[mode]?.label}. Drill in Practice mode to keep training.
+                                    {nextStepMessage(GAME.SNIPER, mode)}
                                 </Typography>
                             )}
                         </CardContent>

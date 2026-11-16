@@ -23,7 +23,7 @@ import { getAuthToken, setAuthToken } from "../../../shared/auth/AuthUtils";
 import { getUserId, getUsername, getUserRole } from "../../../shared/auth/JwtUtils";
 import { MODE, GAME, MODE_META, getHighLow } from "../../../shared/assessment/modes";
 import {
-    gradientText, initials, fmtTime, StatTile, InfoRow, PageBackdrop,
+    gradientText, initials, fmtTime, StatTile, InfoRow, PasswordRow, PageBackdrop,
 } from "../components/profileShared";
 
 const GAME_META = {
@@ -255,6 +255,7 @@ export default function StudentProfile() {
                                     {details?.studentId != null && (
                                         <InfoRow icon={<BadgeIcon />} label="Student ID" value={String(details.studentId)} />
                                     )}
+                                    <PasswordRow />
                                 </Stack>
 
                                 <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>

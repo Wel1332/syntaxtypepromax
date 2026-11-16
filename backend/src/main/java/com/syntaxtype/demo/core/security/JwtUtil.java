@@ -7,6 +7,8 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.syntaxtype.demo.features.user.entity.User;
+
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
@@ -30,12 +32,17 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    public String generateToken(String username, String role, Long userId, boolean isTempPassword) {
+    private static final String PASSWORD_VERSION_CLAIM = "passwordVersion";
+
+    // Takes the whole User so no caller can mint a token without the password
+    // version; one that did would be rejected after the user's first change.
+    public String generateToken(User user) {
         return Jwts.builder()
-                .subject(username)
-                .claim("role", role)
-                .claim("id", userId)
-                .claim("isTempPassword", isTempPassword) // Add the isTempPassword claim
+                .subject(user.getUsername())
+                .claim("role", user.getUserRole().toString())
+                .claim("id", user.getUserId())
+                .claim("isTempPassword", user.isTempPassword())
+                .claim(PASSWORD_VERSION_CLAIM, user.getPasswordVersion())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey())
@@ -77,6 +84,12 @@ public class JwtUtil {
 
     public String extractRole(String token) {
         return (String) extractClaims(token).get("role");
+    }
+
+    /** A token issued before the claim existed reads as 0, every user's starting version. */
+    public int extractPasswordVersion(String token) {
+        Object version = extractClaims(token).get(PASSWORD_VERSION_CLAIM);
+        return version instanceof Number n ? n.intValue() : 0;
     }
 
     public boolean isTokenExpired(String token) {

@@ -102,7 +102,7 @@ public class AuthController {
 
         if (user != null && passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             loginAttemptService.loginSucceeded(email);
-            String token = jwtUtil.generateToken(user.getUsername(), user.getUserRole().toString(), user.getUserId(), user.isTempPassword());
+            String token = jwtUtil.generateToken(user);
             return ResponseEntity.ok(new JwtResponse(token));
         }
 

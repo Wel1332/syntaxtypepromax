@@ -48,7 +48,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            if (jwtUtil.validateToken(jwt)) {
+            if (jwtUtil.validateToken(jwt) && isCurrentPasswordVersion(jwt, userDetails)) {
                 // 🟡 Extract the role from the token. Tokens store the bare enum
                 // name (e.g. "STUDENT"), but Spring's hasRole/hasAnyRole checks
                 // expect the "ROLE_" prefix. Normalize so @PreAuthorize matches.
@@ -67,6 +67,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * A password change bumps the user's password version, so any token minted
+     * before it (another device, or a stolen copy) stops authenticating. Fails
+     * closed if the principal is not ours, since then the version cannot be read.
+     */
+    private boolean isCurrentPasswordVersion(String jwt, UserDetails userDetails) {
+        return userDetails instanceof CustomUserDetails details
+                && jwtUtil.extractPasswordVersion(jwt) == details.getUser().getPasswordVersion();
     }
 
 }

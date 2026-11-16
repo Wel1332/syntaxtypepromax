@@ -46,6 +46,14 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    // Bumped each time the user changes their own password. Every token carries the
+    // version it was issued under and JwtAuthFilter rejects one that no longer
+    // matches, so a change ends every other session. It starts at 0, which is also
+    // what a token without the claim reads as, so tokens issued before this column
+    // existed stay valid. The column default lets ddl-auto add it to existing rows.
+    @Column(columnDefinition = "integer default 0 not null")
+    private int passwordVersion;
+
     // IMPORTANT: If you ever add fields here that represent the "other side"
     // of a bidirectional relationship (e.g., @OneToOne private Student student;),
     // you MUST also add @ToString.Exclude and @EqualsAndHashCode.Exclude to them.

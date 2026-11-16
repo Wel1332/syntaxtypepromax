@@ -53,6 +53,7 @@ import LeaderboardPage from '../features/leaderboard/pages/LeaderboardPage';
 import PersonalStatsDashboard from '../features/dashboard/pages/PersonalStatsDashboard';
 import ProfilePage from '../features/profile/pages/ProfilePage';
 import ChangePasswordPage from '../features/account/pages/ChangePasswordPage';
+import ChangePasswordSignedOutPage from '../features/account/pages/ChangePasswordSignedOutPage';
 
 import NotFoundRedirect from './layout/NotFoundRedirect';
 
@@ -81,6 +82,7 @@ export const routes = [
   // Public-only (redirect away if logged in)
   { path: '/login',                  element: <LoginPage />,              kind: 'public-only' },
   { path: '/register',               element: <RegisterPage />,           kind: 'public-only' },
+  { path: '/change-password',        element: <ChangePasswordSignedOutPage />, kind: 'public-only' },
 
   // Public
   { path: '/unauthorized',           element: <UnauthorizedAccess />,     kind: 'open' },

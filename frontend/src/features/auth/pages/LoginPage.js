@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { setAuthToken } from '../../../shared/auth/AuthUtils';
 import { getUserId, getUserRole } from '../../../shared/auth/JwtUtils';
 import {
@@ -29,10 +29,16 @@ const LoginPage = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
 
-    const [email, setEmail] = useState('');
+    // After a password change, /change-password sends people back here with
+    // their email and a notice, so they only need to type the new password.
+    const location = useLocation();
+    const returnedEmail = location.state?.email || '';
+    const notice = location.state?.notice;
+
+    const [email, setEmail] = useState(returnedEmail);
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [message, setMessage] = useState({ text: '', type: '' });
+    const [message, setMessage] = useState(notice ? { text: notice, type: 'success' } : { text: '', type: '' });
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const navigate = useNavigate();
@@ -207,7 +213,7 @@ const LoginPage = () => {
                                     label="Email"
                                     name="email"
                                     autoComplete="email"
-                                    autoFocus
+                                    autoFocus={!returnedEmail}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     error={!!errors.email}
@@ -228,6 +234,7 @@ const LoginPage = () => {
                                     type={showPassword ? 'text' : 'password'}
                                     id="password"
                                     autoComplete="current-password"
+                                    autoFocus={!!returnedEmail}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     error={!!errors.password}
@@ -252,6 +259,21 @@ const LoginPage = () => {
                                         ),
                                     }}
                                 />
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '-4px !important' }}>
+                                    <Typography
+                                        component={RouterLink}
+                                        to="/change-password"
+                                        variant="body2"
+                                        sx={{
+                                            color: 'primary.main',
+                                            fontWeight: 600,
+                                            textDecoration: 'none',
+                                            '&:hover': { textDecoration: 'underline' },
+                                        }}
+                                    >
+                                        Change password
+                                    </Typography>
+                                </Box>
                                 <Button
                                     type="submit"
                                     fullWidth

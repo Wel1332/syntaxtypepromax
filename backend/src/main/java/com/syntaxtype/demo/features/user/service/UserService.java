@@ -247,7 +247,7 @@ public class UserService {
         User savedUser = userRepository.save(userToUpdate);
 
         // Generate a new token with updated claims (isTempPassword = false)
-        String newToken = jwtUtil.generateToken(savedUser.getUsername(), savedUser.getUserRole().toString(), savedUser.getUserId(), savedUser.isTempPassword());
+        String newToken = jwtUtil.generateToken(savedUser);
         return new AccountSetupResponse(newToken, convertToDTO(savedUser));
     }
 

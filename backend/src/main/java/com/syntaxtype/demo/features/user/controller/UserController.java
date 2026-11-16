@@ -1,14 +1,19 @@
 package com.syntaxtype.demo.features.user.controller;
 
+import com.syntaxtype.demo.core.security.CustomUserDetails;
+import com.syntaxtype.demo.core.security.JwtResponse;
 import com.syntaxtype.demo.features.user.dto.UserDTO;
+import com.syntaxtype.demo.features.user.dto.requests.ChangePasswordRequest;
 import com.syntaxtype.demo.features.user.dto.requests.TempTeacherUpdate;
 import com.syntaxtype.demo.features.user.dto.responses.AccountSetupResponse;
 import com.syntaxtype.demo.core.enums.Role;
 import com.syntaxtype.demo.features.user.entity.User;
+import com.syntaxtype.demo.features.user.service.PasswordChangeService;
 import com.syntaxtype.demo.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -20,6 +25,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final PasswordChangeService passwordChangeService;
 
     @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping
@@ -90,6 +96,20 @@ public class UserController {
             return ResponseEntity.ok(updated);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Any signed-in user changes their own password. The account comes from the
+     * token, never the URL, so there is no id to swap for someone else's. The
+     * response carries a fresh token because the change ends every older one.
+     */
+    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/me/password")
+    public ResponseEntity<JwtResponse> changeOwnPassword(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestBody ChangePasswordRequest request) {
+        String token = passwordChangeService.changeOwnPassword(principal.getUser().getUserId(), request);
+        return ResponseEntity.ok(new JwtResponse(token));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN')")

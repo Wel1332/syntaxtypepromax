@@ -52,6 +52,8 @@ import CrosswordGame from '../features/quiz/pages/CrosswordGame';
 import LeaderboardPage from '../features/leaderboard/pages/LeaderboardPage';
 import PersonalStatsDashboard from '../features/dashboard/pages/PersonalStatsDashboard';
 import ProfilePage from '../features/profile/pages/ProfilePage';
+import ChangePasswordPage from '../features/account/pages/ChangePasswordPage';
+import ChangePasswordSignedOutPage from '../features/account/pages/ChangePasswordSignedOutPage';
 
 import NotFoundRedirect from './layout/NotFoundRedirect';
 
@@ -80,6 +82,7 @@ export const routes = [
   // Public-only (redirect away if logged in)
   { path: '/login',                  element: <LoginPage />,              kind: 'public-only' },
   { path: '/register',               element: <RegisterPage />,           kind: 'public-only' },
+  { path: '/change-password',        element: <ChangePasswordSignedOutPage />, kind: 'public-only' },
 
   // Public
   { path: '/unauthorized',           element: <UnauthorizedAccess />,     kind: 'open' },
@@ -89,6 +92,7 @@ export const routes = [
   { path: '/dashboard',              element: <Dashboard />,              kind: 'protected', roles: ALL },
   { path: '/my-stats',               element: <PersonalStatsDashboard />, kind: 'protected', roles: ALL },
   { path: '/profile',                element: <ProfilePage />,            kind: 'protected', roles: ALL },
+  { path: '/account/password',       element: <ChangePasswordPage />,     kind: 'protected', roles: ALL },
 
   // Protected — STUDENT-only setup
   { path: '/student-details-form',   element: <StudentDetailsForm />,     kind: 'protected', roles: ['STUDENT'] },

@@ -98,7 +98,9 @@ public class SecurityConfig {
             }
         }
         config.setAllowedOrigins(allowedOrigins);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // PATCH was missing, so browsers refused every PATCH request at preflight
+        // (CorsPreflightTest). Authorization is unchanged: this only lets the browser send it.
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);

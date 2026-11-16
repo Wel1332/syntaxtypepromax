@@ -25,7 +25,7 @@ import { authFetch } from "../../../shared/api/authFetch";
 import { getAuthToken, setAuthToken } from "../../../shared/auth/AuthUtils";
 import { getUserId, getUsername, getUserRole } from "../../../shared/auth/JwtUtils";
 import {
-    goldGradientText, initials, StatTile, InfoRow, PageBackdrop,
+    goldGradientText, initials, StatTile, InfoRow, PasswordRow, PageBackdrop,
 } from "../components/profileShared";
 
 const QUICK_ACTIONS = [
@@ -457,6 +457,7 @@ export default function TeacherProfile() {
                                     <InfoRow icon={<MailIcon />}    label="Email"      value={email} />
                                     <InfoRow icon={<SchoolIcon />}  label="Department" value={details?.department || "—"} />
                                     <InfoRow icon={<WorkIcon />}    label="Position"   value={details?.position || "—"} />
+                                    <PasswordRow />
                                 </Box>
 
                                 <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>

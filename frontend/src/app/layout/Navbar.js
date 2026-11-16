@@ -24,6 +24,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import LogoutIcon from '@mui/icons-material/Logout';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import LoginIcon from '@mui/icons-material/Login';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
@@ -236,6 +237,17 @@ const Navbar = () => {
                     borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
                 }}
             >
+                <Button
+                    fullWidth
+                    color="inherit"
+                    component={Link}
+                    to="/account/password"
+                    startIcon={<LockResetIcon />}
+                    onClick={() => setSidebarOpen(false)}
+                    sx={{ mb: 1, textTransform: 'none', color: 'text.secondary' }}
+                >
+                    Change password
+                </Button>
                 <Button
                     fullWidth
                     variant="outlined"

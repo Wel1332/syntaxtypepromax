@@ -1,5 +1,5 @@
-// Attempt limits are a study control: the Pre-Test is meant to be one shot and
-// the Post-Test two. Before these were reconciled against the server they lived
+// Attempt limits are a study control: the Pre-Test and Post-Test are one shot
+// each. Before these were reconciled against the server they lived
 // only in localStorage, so switching device handed the student a fresh set.
 // These tests pin the reconcile rules, including the ones that are easy to get
 // backwards — counts must never move down, and a teacher reset must survive the
@@ -55,7 +55,7 @@ describe("syncAttemptsFromServer", () => {
         await modes.syncAttemptsFromServer();
 
         expect(modes.canStartMode(modes.GAME.SNIPER, modes.MODE.PRE_TEST)).toBe(false);
-        // Post-Test allows two; both are spent.
+        // Post-Test allows one; it is spent.
         expect(modes.attemptsRemaining(modes.GAME.SNIPER, modes.MODE.POST_TEST)).toBe(0);
     });
 
@@ -160,14 +160,154 @@ describe("teacher reset survives the next sync", () => {
     });
 });
 
-describe("Post-Test gating is unaffected", () => {
-    test("Post-Test stays locked until a Pre-Test exists on the server", async () => {
-        authFetch.mockResolvedValue(okResponse([]));
-        await modes.syncAttemptsFromServer();
-        expect(modes.isModeLocked(modes.GAME.SNIPER, modes.MODE.POST_TEST)).toBe(true);
+// The study order, per game: Pre-Test (1 attempt) -> exactly N Practice rounds
+// -> Post-Test (1 attempt) -> unlimited Practice.
+describe("mode order: Pre-Test, then N Practice rounds, then Post-Test", () => {
+    const { GAME, MODE, LOCK } = modes;
+    const N = modes.REQUIRED_PRACTICE_ROUNDS;
+    const practise = (game, times) => {
+        for (let i = 0; i < times; i++) modes.recordAttempt(game, MODE.PRACTICE, { score: i });
+    };
+    const rows = (challengeType, mode, times) =>
+        Array.from({ length: times }, () => score(challengeType, mode));
 
+    test("the required number of practice rounds is 20", () => {
+        expect(N).toBe(20);
+    });
+
+    test("a new student can start only the Pre-Test", () => {
+        expect(modes.canStartMode(GAME.SNIPER, MODE.PRE_TEST)).toBe(true);
+        expect(modes.getLockReason(GAME.SNIPER, MODE.PRACTICE)).toBe(LOCK.NEED_PRE_TEST);
+        expect(modes.getLockReason(GAME.SNIPER, MODE.POST_TEST)).toBe(LOCK.NEED_PRE_TEST);
+    });
+
+    test("finishing the Pre-Test opens Practice, with N rounds to do", () => {
+        modes.recordAttempt(GAME.SNIPER, MODE.PRE_TEST, { score: 10 });
+
+        expect(modes.canStartMode(GAME.SNIPER, MODE.PRACTICE)).toBe(true);
+        expect(modes.attemptsRemaining(GAME.SNIPER, MODE.PRACTICE)).toBe(N);
+        expect(modes.getLockReason(GAME.SNIPER, MODE.POST_TEST)).toBe(LOCK.NEED_PRACTICE);
+    });
+
+    test("one round short of N, the Post-Test is still locked", () => {
+        modes.recordAttempt(GAME.SNIPER, MODE.PRE_TEST, { score: 10 });
+        practise(GAME.SNIPER, N - 1);
+
+        expect(modes.getLockReason(GAME.SNIPER, MODE.POST_TEST)).toBe(LOCK.NEED_PRACTICE);
+        expect(modes.getPracticeProgress(GAME.SNIPER)).toMatchObject({ done: N - 1, required: N });
+    });
+
+    test("after N rounds the Post-Test opens and Practice pauses", () => {
+        modes.recordAttempt(GAME.SNIPER, MODE.PRE_TEST, { score: 10 });
+        practise(GAME.SNIPER, N);
+
+        expect(modes.canStartMode(GAME.SNIPER, MODE.POST_TEST)).toBe(true);
+        // Practice is capped at N so every student reaches the Post-Test with
+        // the same amount of practice.
+        expect(modes.getLockReason(GAME.SNIPER, MODE.PRACTICE)).toBe(LOCK.PRACTICE_DONE_TAKE_POST);
+        expect(modes.canStartMode(GAME.SNIPER, MODE.PRACTICE)).toBe(false);
+        expect(modes.nextStepMessage(GAME.SNIPER, MODE.PRACTICE)).toMatch(/Post-Test is unlocked/);
+    });
+
+    test("the Post-Test is one attempt, and Practice becomes unlimited after it", () => {
+        modes.recordAttempt(GAME.SNIPER, MODE.PRE_TEST, { score: 10 });
+        practise(GAME.SNIPER, N);
+        modes.recordAttempt(GAME.SNIPER, MODE.POST_TEST, { score: 30 });
+
+        expect(modes.canStartMode(GAME.SNIPER, MODE.POST_TEST)).toBe(false);
+        expect(modes.getLockReason(GAME.SNIPER, MODE.PRACTICE)).toBeNull();
+        expect(modes.attemptsRemaining(GAME.SNIPER, MODE.PRACTICE)).toBe(Infinity);
+        expect(modes.getPracticeProgress(GAME.SNIPER).unlimited).toBe(true);
+        expect(modes.nextStepMessage(GAME.SNIPER, MODE.POST_TEST)).toMatch(/unlimited/);
+    });
+
+    test("the Pre-Test result screen points the student to Practice", () => {
+        modes.recordAttempt(GAME.SNIPER, MODE.PRE_TEST, { score: 10 });
+        expect(modes.nextStepMessage(GAME.SNIPER, MODE.PRE_TEST)).toMatch(/Practice is now unlocked/);
+        // A round that can be replayed shows no message.
+        expect(modes.nextStepMessage(GAME.SNIPER, MODE.PRACTICE)).toBeNull();
+    });
+
+    test("practice played before the Pre-Test does not count toward N", () => {
+        // Possible for students who played before the order was enforced.
+        practise(GAME.SNIPER, N);
+        modes.recordAttempt(GAME.SNIPER, MODE.PRE_TEST, { score: 10 });
+
+        expect(modes.getPracticeProgress(GAME.SNIPER).done).toBe(0);
+        expect(modes.getLockReason(GAME.SNIPER, MODE.POST_TEST)).toBe(LOCK.NEED_PRACTICE);
+    });
+
+    test("practice without a Pre-Test never unlocks the Post-Test", () => {
+        practise(GAME.SNIPER, N);
+        expect(modes.getLockReason(GAME.SNIPER, MODE.POST_TEST)).toBe(LOCK.NEED_PRE_TEST);
+    });
+
+    test("the order is per game: progress in one game unlocks nothing in another", () => {
+        modes.recordAttempt(GAME.FALLING, MODE.PRE_TEST, { score: 10 });
+        practise(GAME.FALLING, N);
+
+        expect(modes.canStartMode(GAME.FALLING, MODE.POST_TEST)).toBe(true);
+        expect(modes.getLockReason(GAME.TRANSLATION, MODE.PRACTICE)).toBe(LOCK.NEED_PRE_TEST);
+        expect(modes.getLockReason(GAME.TRANSLATION, MODE.POST_TEST)).toBe(LOCK.NEED_PRE_TEST);
+    });
+
+    test("N practice rounds done on another device unlock the Post-Test here", async () => {
+        authFetch.mockResolvedValue(okResponse([
+            score("SYNTAX_SAVER", "PRE_TEST"),
+            ...rows("SYNTAX_SAVER", "PRACTICE", N),
+        ]));
+        await modes.syncAttemptsFromServer();
+
+        expect(modes.canStartMode(GAME.SNIPER, MODE.POST_TEST)).toBe(true);
+        expect(modes.canStartMode(GAME.SNIPER, MODE.PRACTICE)).toBe(false);
+    });
+
+    test("on the server too, only practice after the Pre-Test counts", async () => {
+        authFetch.mockResolvedValue(okResponse([
+            ...rows("SYNTAX_SAVER", "PRACTICE", N), // before the Pre-Test
+            score("SYNTAX_SAVER", "PRE_TEST"),
+            ...rows("SYNTAX_SAVER", "PRACTICE", 3), // after it
+        ]));
+        await modes.syncAttemptsFromServer();
+
+        expect(modes.getPracticeProgress(GAME.SNIPER).done).toBe(3);
+        expect(modes.getLockReason(GAME.SNIPER, MODE.POST_TEST)).toBe(LOCK.NEED_PRACTICE);
+    });
+
+    test("server timestamps with microseconds are ordered correctly", async () => {
+        // The backend sends LocalDateTime with more than 3 fractional digits.
+        const at = (s) => `2026-01-01T00:00:${s}.123456`;
+        authFetch.mockResolvedValue(okResponse([
+            { challengeType: "SYNTAX_SAVER", modeType: "PRACTICE", score: 0, submittedAt: at("01") },
+            { challengeType: "SYNTAX_SAVER", modeType: "PRE_TEST", score: 0, submittedAt: at("02") },
+            { challengeType: "SYNTAX_SAVER", modeType: "PRACTICE", score: 0, submittedAt: at("03") },
+        ]));
+        await modes.syncAttemptsFromServer();
+
+        expect(modes.getPracticeProgress(GAME.SNIPER).done).toBe(1);
+    });
+
+    test("a Pre-Test alone on the server leaves the Post-Test locked", async () => {
         authFetch.mockResolvedValue(okResponse([score("SYNTAX_SAVER", "PRE_TEST")]));
         await modes.syncAttemptsFromServer();
-        expect(modes.isModeLocked(modes.GAME.SNIPER, modes.MODE.POST_TEST)).toBe(false);
+
+        expect(modes.canStartMode(GAME.SNIPER, MODE.PRACTICE)).toBe(true);
+        expect(modes.getLockReason(GAME.SNIPER, MODE.POST_TEST)).toBe(LOCK.NEED_PRACTICE);
+    });
+
+    test("a teacher reset of the Pre-Test restarts the practice count", async () => {
+        authFetch.mockResolvedValue(okResponse([
+            score("SYNTAX_SAVER", "PRE_TEST"),
+            ...rows("SYNTAX_SAVER", "PRACTICE", N),
+        ]));
+        await modes.syncAttemptsFromServer();
+        expect(modes.canStartMode(GAME.SNIPER, MODE.POST_TEST)).toBe(true);
+
+        modes.resetMode(GAME.SNIPER, MODE.PRE_TEST);
+        await modes.syncAttemptsFromServer();
+
+        // The old practice belongs to the old baseline: it must not carry over.
+        expect(modes.getLockReason(GAME.SNIPER, MODE.PRACTICE)).toBe(LOCK.NEED_PRE_TEST);
+        expect(modes.getPracticeProgress(GAME.SNIPER).done).toBe(0);
     });
 });

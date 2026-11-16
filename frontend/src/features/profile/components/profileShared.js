@@ -2,7 +2,9 @@
 // re-derive avatar styling, time formatting, or info-row layout.
 
 import React from "react";
-import { Box, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Link } from "react-router-dom";
+import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
 
 export const gradientText = {
     background: "linear-gradient(90deg, #C8456D 0%, #E78AAC 50%, #FFC700 100%)",
@@ -69,7 +71,7 @@ export function StatTile({ label, value, icon, accent }) {
     );
 }
 
-export function InfoRow({ icon, label, value }) {
+export function InfoRow({ icon, label, value, action }) {
     return (
         <Stack direction="row" spacing={1.5} alignItems="center">
             <Box sx={{ color: "primary.main", display: "flex" }}>{icon}</Box>
@@ -79,7 +81,32 @@ export function InfoRow({ icon, label, value }) {
                 </Typography>
                 <Typography sx={{ color: "text.primary", fontWeight: 600 }}>{value}</Typography>
             </Box>
+            {action}
         </Stack>
+    );
+}
+
+// The Account card's password row: the value is never known, so it shows a mask
+// and links to the change-password page.
+export function PasswordRow() {
+    return (
+        <InfoRow
+            icon={<LockIcon />}
+            label="Password"
+            value="••••••••"
+            action={
+                <Button
+                    component={Link}
+                    to="/account/password"
+                    size="small"
+                    variant="outlined"
+                    aria-label="Change password"
+                    sx={{ textTransform: "none" }}
+                >
+                    Change
+                </Button>
+            }
+        />
     );
 }
 

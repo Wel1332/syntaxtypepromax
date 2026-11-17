@@ -2,8 +2,11 @@ package com.syntaxtype.demo.features.classroom.service;
 
 import com.syntaxtype.demo.features.classroom.dto.ClassroomDTO;
 import com.syntaxtype.demo.features.classroom.dto.CreateClassRequest;
+import com.syntaxtype.demo.features.classroom.entity.ClassChallenge;
 import com.syntaxtype.demo.features.classroom.entity.ClassEnrollment;
 import com.syntaxtype.demo.features.classroom.entity.Classroom;
+import com.syntaxtype.demo.features.classroom.repository.ClassChallengeAttemptRepository;
+import com.syntaxtype.demo.features.classroom.repository.ClassChallengeRepository;
 import com.syntaxtype.demo.features.classroom.repository.ClassEnrollmentRepository;
 import com.syntaxtype.demo.features.classroom.repository.ClassroomRepository;
 import com.syntaxtype.demo.features.user.dto.StudentDTO;
@@ -32,6 +35,8 @@ public class ClassroomService {
 
     private final ClassroomRepository classroomRepository;
     private final ClassEnrollmentRepository enrollmentRepository;
+    private final ClassChallengeRepository challengeRepository;
+    private final ClassChallengeAttemptRepository attemptRepository;
     private final StudentService studentService;
     private final UserService userService;
 
@@ -74,6 +79,13 @@ public class ClassroomService {
     public void deleteClass(Long classroomId, User requestingUser) {
         Classroom classroom = requireClassroom(classroomId);
         requireOwnerOrAdmin(classroom, requestingUser);
+        // Challenges point at the class, so they (and their attempts) go first or
+        // the delete would fail on the foreign key.
+        List<ClassChallenge> challenges = challengeRepository.findByClassroomOrderByCreatedAtDesc(classroom);
+        if (!challenges.isEmpty()) {
+            attemptRepository.deleteByChallengeIn(challenges);
+            challengeRepository.deleteAll(challenges);
+        }
         enrollmentRepository.deleteAll(enrollmentRepository.findByClassroom(classroom));
         classroomRepository.delete(classroom);
     }
@@ -130,13 +142,20 @@ public class ClassroomService {
         return userService.getOrCreateTeacherProfile(user);
     }
 
-    private Student requireStudent(User user) {
+    public Student requireStudent(User user) {
         if (user.getUserRole() != Role.STUDENT) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Your account is not set up as a student.");
         }
         // Provisions the Student profile on demand for accounts that predate it.
         return userService.getOrCreateStudentProfile(user);
+    }
+
+    /** The class, if the user owns it or is an admin; 404 or 403 otherwise. */
+    public Classroom requireOwnedClassroom(Long classroomId, User user) {
+        Classroom classroom = requireClassroom(classroomId);
+        requireOwnerOrAdmin(classroom, user);
+        return classroom;
     }
 
     private Classroom requireClassroom(Long classroomId) {

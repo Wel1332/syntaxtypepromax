@@ -25,6 +25,8 @@ import TeacherDetailsForm from '../features/teacher/pages/TeacherDetailsForm';
 import TeacherSetupAccountPage from '../features/teacher/pages/TeacherSetupAccountPage';
 import TeacherClassDashboard from '../features/teacher/pages/TeacherClassDashboard';
 import TeacherClasses from '../features/teacher/pages/TeacherClasses';
+import ClassChallengesPage from '../features/teacher/pages/ClassChallengesPage';
+import ClassChallengeEditor from '../features/teacher/pages/ClassChallengeEditor';
 import JoinClass from '../features/student/pages/JoinClass';
 
 import TypingTest from '../features/typing-test/pages/TypingTest';
@@ -107,6 +109,9 @@ export const routes = [
   // Protected — staff
   { path: '/teacher/class',          element: <TeacherClassDashboard />,  kind: 'protected', roles: STAFF },
   { path: '/teacher/classes',        element: <TeacherClasses />,         kind: 'protected', roles: STAFF },
+  { path: '/teacher/classes/:classroomId/challenges',                  element: <ClassChallengesPage />,  kind: 'protected', roles: STAFF },
+  { path: '/teacher/classes/:classroomId/challenges/new',              element: <ClassChallengeEditor />, kind: 'protected', roles: STAFF },
+  { path: '/teacher/classes/:classroomId/challenges/:challengeId/edit', element: <ClassChallengeEditor />, kind: 'protected', roles: STAFF },
   { path: '/teacher/content',        element: <ContentManager />,         kind: 'protected', roles: STAFF },
   { path: '/instructor',             element: <InstructorModule />,       kind: 'protected', roles: STAFF },
   { path: '/challenges',             element: <ChallengePage />,          kind: 'protected', roles: STAFF },

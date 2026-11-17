@@ -28,7 +28,10 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import PendingIcon from '@mui/icons-material/Pending';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import TerminalIcon from '@mui/icons-material/Terminal';
 import { getAuthToken } from '../../../shared/auth/AuthUtils';
+import { isGameLocked } from '../../../shared/games/gameLocks';
 import { getUserRole, getUserId, getUsername } from '../../../shared/auth/JwtUtils';
 import { authFetch } from '../../../shared/api/authFetch';
 import { API_BASE } from '../../../shared/api/client';
@@ -249,12 +252,15 @@ const Dashboard = () => {
         stats.studentGamesPlayed, stats.studentWpm, stats.studentAccuracy, stats.studentXp]);
 
     const quickActions = useMemo(() => {
+        // Shortcuts only go to games that can be played; the sidebar shows the locked ones.
         const base = [
-            { label: 'Typing Test', path: '/typingtest', icon: <KeyboardIcon /> },
+            { label: 'Syntax Sniper', path: '/syntax-sniper', icon: <GpsFixedIcon /> },
+            { label: 'Translation Terminal', path: '/translation-terminal', icon: <TerminalIcon /> },
             { label: 'Falling Code', path: '/fallingtypingtest', icon: <CloudDownloadIcon /> },
+            { label: 'Typing Test', path: '/typingtest', icon: <KeyboardIcon /> },
             { label: 'Galaxy Mode', path: '/galaxy-new', icon: <RocketLaunchIcon /> },
             { label: 'All Lessons', path: '/lessons/all', icon: <MenuBookIcon /> },
-        ];
+        ].filter((a) => !isGameLocked(a.path));
         const extras = {
             STUDENT: [
                 { label: 'Join a Class', path: '/classes/join', icon: <SchoolIcon /> },

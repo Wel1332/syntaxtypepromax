@@ -17,6 +17,7 @@ import {
 import LoginIcon from '@mui/icons-material/Login';
 import SchoolIcon from '@mui/icons-material/School';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import { authFetch } from '../../../shared/api/authFetch';
 import { API_BASE } from '../../../shared/api/client';
 
@@ -158,9 +159,21 @@ const JoinClass = () => {
                 </Card>
 
                 {/* Enrolled classes */}
-                <Typography variant="h5" sx={{ color: 'text.primary', mb: 2 }}>
-                    My classes
-                </Typography>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                    <Typography variant="h5" sx={{ color: 'text.primary' }}>
+                        My classes
+                    </Typography>
+                    {loadState === 'ok' && (
+                        <Button
+                            variant="outlined"
+                            startIcon={<AssignmentIcon />}
+                            onClick={() => navigate('/class-challenges')}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            Class challenges
+                        </Button>
+                    )}
+                </Stack>
                 {loadState === 'loading' && <LinearProgress />}
                 {loadState === 'error' && (
                     <Typography sx={{ color: 'error.main', py: 2 }}>

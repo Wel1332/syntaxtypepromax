@@ -44,6 +44,7 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import GroupsIcon from '@mui/icons-material/Groups';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import TerminalIcon from '@mui/icons-material/Terminal';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import Tooltip from '@mui/material/Tooltip';
 import { useThemeMode } from '../../shared/theme/ThemeContext';
 
@@ -102,6 +103,7 @@ const Navbar = () => {
                 title: 'My Classes',
                 items: [
                     { text: 'Join a Class', link: '/classes/join', icon: <SchoolIcon /> },
+                    { text: 'Class Challenges', link: '/class-challenges', icon: <AssignmentIcon /> },
                 ],
             }]
             : []),

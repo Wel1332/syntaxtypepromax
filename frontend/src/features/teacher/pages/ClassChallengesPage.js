@@ -11,13 +11,14 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import { PageBackdrop } from '../../profile/components/profileShared';
 import { authFetch } from '../../../shared/api/authFetch';
 import { GAMES, listChallenges, deleteChallenge, setVisibility } from '../data/classChallenges';
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-function ChallengeRow({ challenge, busy, onToggle, onEdit, onDelete }) {
+function ChallengeRow({ challenge, busy, onToggle, onEdit, onResults, onDelete }) {
     const game = GAMES[challenge.game];
     return (
         <Card sx={{ borderLeft: `4px solid ${game?.color || '#999'}` }}>
@@ -32,7 +33,7 @@ function ChallengeRow({ challenge, busy, onToggle, onEdit, onDelete }) {
                             {challenge.maxAttempts ? plural(challenge.maxAttempts, 'attempt') + ' each' : 'Unlimited attempts'}
                         </Typography>
                     </Box>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+                    <Stack direction="row" alignItems="center" sx={{ flexShrink: 0, flexWrap: 'wrap', columnGap: 1, rowGap: 0.5 }}>
                         <FormControlLabel
                             control={(
                                 <Switch
@@ -47,6 +48,12 @@ function ChallengeRow({ challenge, busy, onToggle, onEdit, onDelete }) {
                         />
                         <Button size="small" startIcon={<EditIcon />} onClick={onEdit} sx={{ textTransform: 'none' }}>
                             Edit
+                        </Button>
+                        <Button
+                            size="small" startIcon={<BarChartIcon />} onClick={onResults} sx={{ textTransform: 'none' }}
+                            aria-label={`Results for "${challenge.title}"`}
+                        >
+                            Results
                         </Button>
                         <Tooltip title="Delete challenge">
                             <IconButton size="small" onClick={onDelete} aria-label={`Delete "${challenge.title}"`}>
@@ -173,6 +180,7 @@ export default function ClassChallengesPage() {
                                 busy={busyId === c.challengeId}
                                 onToggle={(visible) => toggle(c, visible)}
                                 onEdit={() => navigate(`/teacher/classes/${classroomId}/challenges/${c.challengeId}/edit`)}
+                                onResults={() => navigate(`/teacher/classes/${classroomId}/challenges/${c.challengeId}/results`)}
                                 onDelete={() => setToDelete(c)}
                             />
                         ))}

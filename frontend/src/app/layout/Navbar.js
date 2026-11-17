@@ -40,7 +40,6 @@ import GridViewIcon from '@mui/icons-material/GridView';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import SchoolIcon from '@mui/icons-material/School';
 import EditNoteIcon from '@mui/icons-material/EditNote';
-import BoltIcon from '@mui/icons-material/Bolt';
 import GroupsIcon from '@mui/icons-material/Groups';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import TerminalIcon from '@mui/icons-material/Terminal';
@@ -114,7 +113,6 @@ const Navbar = () => {
                     { text: 'My Classes', link: '/teacher/classes', icon: <GroupsIcon /> },
                     { text: 'Instructor Module', link: '/instructor', icon: <SchoolIcon /> },
                     { text: 'Create Lesson', link: '/lesson', icon: <EditNoteIcon /> },
-                    { text: 'Challenges', link: '/challenges', icon: <BoltIcon /> },
                 ],
             }]
             : []),

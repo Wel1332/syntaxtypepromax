@@ -174,6 +174,13 @@ export function toRequest(game, form) {
     };
 }
 
+// The server stores "custom" for a Bug Smasher line left without a kind of bug;
+// the editor shows that as the empty field the teacher left it.
+const formItem = (game, item) => {
+    const merged = { ...blankItem(game), ...item };
+    return game === "FALLING" && merged.category === "custom" ? { ...merged, category: "" } : merged;
+};
+
 /** The editor's form for a challenge loaded from the server. */
 export function fromChallenge(challenge) {
     return {
@@ -182,7 +189,7 @@ export function fromChallenge(challenge) {
         limitAttempts: challenge.maxAttempts != null,
         maxAttempts: challenge.maxAttempts != null ? String(challenge.maxAttempts) : "",
         visible: !!challenge.visible,
-        items: (challenge.items || []).map((item) => ({ ...blankItem(challenge.game), ...item })),
+        items: (challenge.items || []).map((item) => formItem(challenge.game, item)),
     };
 }
 
@@ -224,6 +231,7 @@ export const getChallenge = (classroomId, id) => call(`${base(classroomId)}/${id
 export const createChallenge = (classroomId, body) => call(base(classroomId), json("POST", body));
 export const updateChallenge = (classroomId, id, body) => call(`${base(classroomId)}/${id}`, json("PUT", body));
 export const deleteChallenge = (classroomId, id) => call(`${base(classroomId)}/${id}`, { method: "DELETE" });
+export const getResults = (classroomId, id) => call(`${base(classroomId)}/${id}/results`);
 
 /** Show or hide a challenge. PUT replaces it, so the saved challenge is resent with only `visible` changed. */
 export async function setVisibility(classroomId, id, visible) {

@@ -30,7 +30,7 @@ import {
 
 const QUICK_ACTIONS = [
     { label: "Create lesson",   to: "/lesson",       icon: <EditNoteIcon />,     color: "#C8456D", desc: "Author a new C programming lesson for your class." },
-    { label: "New challenge",   to: "/challenges",   icon: <GpsFixedIcon />,     color: "#FFC700", desc: "Build a coding challenge students can attempt." },
+    { label: "New challenge",   to: "/teacher/classes", icon: <GpsFixedIcon />,  color: "#FFC700", desc: "Make a challenge for one of your classes to play." },
     { label: "Class roster",    to: "/teacher/class", icon: <GroupsIcon />,      color: "#E78AAC", desc: "See every student's stats, sort and filter." },
     { label: "Instructor hub",  to: "/instructor",   icon: <RocketLaunchIcon />, color: "#9C5BE3", desc: "Review submissions and class progress." },
 ];

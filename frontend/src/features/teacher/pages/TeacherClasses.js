@@ -369,9 +369,18 @@ const TeacherClasses = () => {
                                             size="small"
                                             sx={{ fontWeight: 700 }}
                                         />
-                                        <Button size="small" onClick={() => openRoster(cls)}>
-                                            View roster
-                                        </Button>
+                                        <Stack direction="row" spacing={1}>
+                                            <Button size="small" onClick={() => openRoster(cls)}>
+                                                View roster
+                                            </Button>
+                                            <Button
+                                                size="small"
+                                                variant="contained"
+                                                onClick={() => navigate(`/teacher/classes/${cls.classroomId}/challenges`)}
+                                            >
+                                                Challenges
+                                            </Button>
+                                        </Stack>
                                     </Stack>
                                 </CardContent>
                             </Card>

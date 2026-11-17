@@ -3,7 +3,7 @@
 
 import { authFetch } from "../../../shared/api/authFetch";
 import {
-    attemptsInfo, attemptsLabel, playState, groupByClass, attemptBody,
+    attemptsInfo, attemptsLabel, playState, groupByClass, attemptBody, questionLabel,
     listMyChallenges, getMyChallenge, submitAttempt, isFinalRefusal,
 } from "./classChallenges";
 
@@ -33,18 +33,27 @@ describe("attempts", () => {
 });
 
 describe("playState", () => {
-    test("Sniper and Translation can be played", () => {
+    test("all three study games can be played", () => {
         expect(playState(challenge()).canPlay).toBe(true);
         expect(playState(challenge({ game: "TRANSLATION" })).canPlay).toBe(true);
+        expect(playState(challenge({ game: "FALLING" })).canPlay).toBe(true);
     });
 
-    test("Bug Smasher isn't playable yet, and says so", () => {
-        expect(playState(challenge({ game: "FALLING" }))).toEqual({ canPlay: false, reason: "Bug Smasher challenges open soon." });
+    test("a game this page doesn't know yet says so instead of breaking", () => {
+        expect(playState(challenge({ game: "GALAXY" }))).toEqual({ canPlay: false, reason: "This game can't be played here yet." });
     });
 
     test("no attempts left", () => {
         expect(playState(challenge({ maxAttempts: 1, attemptsUsed: 1 }))).toEqual({ canPlay: false, reason: "You've used all 1 attempt." });
     });
+});
+
+test("result labels name the question without its answer", () => {
+    expect(questionLabel("SNIPER", { title: "Print", code: "x_", answers: [";"] })).toBe("Print");
+    expect(questionLabel("TRANSLATION", { prompt: "Declare x", solution: "int x;" })).toBe("Declare x");
+    expect(questionLabel("FALLING", { buggy: "int a", correct: "int a;", category: "missing semicolon" })).toBe("int a (missing semicolon)");
+    expect(questionLabel("FALLING", { buggy: "int a", correct: "int a;", category: "custom" })).toBe("int a");
+    expect(questionLabel("FALLING", { buggy: "int a", correct: "int a;" })).toBe("int a");
 });
 
 test("groups by class, keeping the newest-first order", () => {

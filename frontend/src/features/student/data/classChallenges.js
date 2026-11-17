@@ -4,7 +4,7 @@
 
 import { authFetch } from "../../../shared/api/authFetch";
 
-export const PLAYABLE_GAMES = ["SNIPER", "TRANSLATION"];
+export const PLAYABLE_GAMES = ["SNIPER", "TRANSLATION", "FALLING"];
 
 export const LIMITS = {
     MAX_SCORE: 1_000_000,
@@ -30,11 +30,21 @@ export function attemptsLabel(challenge) {
 /** Whether the student can start a round now, and if not, why. */
 export function playState(challenge) {
     if (!PLAYABLE_GAMES.includes(challenge.game)) {
-        return { canPlay: false, reason: "Bug Smasher challenges open soon." };
+        return { canPlay: false, reason: "This game can't be played here yet." };
     }
     const { max, exhausted } = attemptsInfo(challenge);
     if (exhausted) return { canPlay: false, reason: `You've used all ${plural(max, "attempt")}.` };
     return { canPlay: true, reason: null };
+}
+
+// The server stores "custom" when a teacher leaves a line's kind of bug blank.
+const bugKind = (item) => (item.category && item.category !== "custom" ? item.category : null);
+
+/** How a question is listed on the result screen, without giving its answer away. */
+export function questionLabel(game, item) {
+    if (game === "SNIPER") return item.title;
+    if (game === "FALLING") return bugKind(item) ? `${item.buggy} (${bugKind(item)})` : item.buggy;
+    return item.prompt;
 }
 
 /** Groups challenges by class, keeping the server's newest-first order. */

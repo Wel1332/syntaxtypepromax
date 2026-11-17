@@ -1,16 +1,17 @@
 // Plays a teacher's Syntax Sniper drills once each: press the key for each blank.
 
-import React, { useEffect, useMemo, useReducer, useRef } from 'react';
+import React, { useEffect, useMemo, useReducer } from 'react';
 import { Box, Card, CardContent, Chip, LinearProgress, Stack, Typography, useTheme } from '@mui/material';
-import {
-    TICK_SECONDS, sniperSeconds, sniperSegments, startSniper, sniperReducer,
-} from '../data/challengeRounds';
+import { sniperSeconds, sniperSegments, startSniper, sniperReducer } from '../data/challengeRounds';
+import { useFinishOnce, useRoundClock } from './roundHooks';
 
 export default function SniperRound({ items, onFinish }) {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
     const [state, dispatch] = useReducer(sniperReducer, items, startSniper);
-    const reported = useRef(false);
+
+    useRoundClock(dispatch, !state.done);
+    useFinishOnce(state, onFinish);
 
     useEffect(() => {
         const onKey = (e) => {
@@ -21,19 +22,6 @@ export default function SniperRound({ items, onFinish }) {
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
     }, []);
-
-    useEffect(() => {
-        if (state.done) return undefined;
-        const timer = setInterval(() => dispatch({ type: 'tick', seconds: TICK_SECONDS }), TICK_SECONDS * 1000);
-        return () => clearInterval(timer);
-    }, [state.done]);
-
-    useEffect(() => {
-        if (state.done && !reported.current) {
-            reported.current = true;
-            onFinish(state);
-        }
-    }, [state, onFinish]);
 
     const item = items[state.index];
     const segments = useMemo(() => (item ? sniperSegments(item.code, item.answers) : []), [item]);

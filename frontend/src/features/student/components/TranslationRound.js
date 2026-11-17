@@ -3,9 +3,8 @@
 
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { Box, Button, Card, CardContent, Chip, LinearProgress, Stack, Typography, useTheme } from '@mui/material';
-import {
-    TICK_SECONDS, translationSeconds, startTranslation, translationReducer,
-} from '../data/challengeRounds';
+import { translationSeconds, startTranslation, translationReducer } from '../data/challengeRounds';
+import { useFinishOnce, useRoundClock } from './roundHooks';
 
 const FEEDBACK = {
     correct: { text: 'Correct!', color: '#3ecf6a' },
@@ -21,7 +20,9 @@ export default function TranslationRound({ items, onFinish }) {
     const [pasteBlocked, setPasteBlocked] = useState(false);
     const inputRef = useRef(null);
     const pasteHint = useRef(null);
-    const reported = useRef(false);
+
+    useRoundClock(dispatch, !state.done);
+    useFinishOnce(state, onFinish);
 
     useEffect(() => () => clearTimeout(pasteHint.current), []);
 
@@ -29,19 +30,6 @@ export default function TranslationRound({ items, onFinish }) {
         setAnswer('');
         inputRef.current?.focus();
     }, [state.index]);
-
-    useEffect(() => {
-        if (state.done) return undefined;
-        const timer = setInterval(() => dispatch({ type: 'tick', seconds: TICK_SECONDS }), TICK_SECONDS * 1000);
-        return () => clearInterval(timer);
-    }, [state.done]);
-
-    useEffect(() => {
-        if (state.done && !reported.current) {
-            reported.current = true;
-            onFinish(state);
-        }
-    }, [state, onFinish]);
 
     const blockClipboard = (e) => {
         e.preventDefault();

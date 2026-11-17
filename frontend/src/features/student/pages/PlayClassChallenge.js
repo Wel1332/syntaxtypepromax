@@ -15,19 +15,25 @@ import { PageBackdrop } from '../../profile/components/profileShared';
 import { GAMES } from '../../teacher/data/classChallenges';
 import SniperRound from '../components/SniperRound';
 import TranslationRound from '../components/TranslationRound';
+import FallingRound from '../components/FallingRound';
 import { roundSummary } from '../data/challengeRounds';
 import {
-    attemptBody, attemptsInfo, getMyChallenge, isFinalRefusal, playState, plural, submitAttempt,
+    attemptBody, attemptsInfo, getMyChallenge, isFinalRefusal, playState, plural, questionLabel, submitAttempt,
 } from '../data/classChallenges';
 
 const HOW_TO_PLAY = {
     SNIPER: 'Each question is C code with blanks. Press the key for each missing character; there is no need to press Enter. Wrong keys cost half a second.',
     TRANSLATION: 'Each question describes some C code in plain English. Type the code and press Enter. Spacing doesn\'t matter, but names, types and semicolons do. Copy and paste are turned off.',
+    FALLING: 'Buggy lines of C fall from the top, up to two at a time. Type the fixed line before it lands; it clears as soon as it\'s right, with no Enter needed. Spacing doesn\'t matter. A line that lands counts as missed. Copy and paste are turned off.',
 };
 
-const ROUNDS = { SNIPER: SniperRound, TRANSLATION: TranslationRound };
+const ROUND_SIZE = {
+    SNIPER: (n) => `${plural(n, 'question')}, each with its own timer`,
+    TRANSLATION: (n) => `${plural(n, 'question')}, each with its own timer`,
+    FALLING: (n) => `${plural(n, 'buggy line')} to fix`,
+};
 
-const questionLabel = (game, item) => (game === 'SNIPER' ? item.title : item.prompt);
+const ROUNDS = { SNIPER: SniperRound, TRANSLATION: TranslationRound, FALLING: FallingRound };
 
 function Stat({ label, value }) {
     return (
@@ -177,7 +183,7 @@ export default function PlayClassChallenge() {
                                 </Typography>
                             )}
                             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-                                {plural(challenge.itemCount, 'question')}, each with its own timer · {attemptLine(challenge)}
+                                {(ROUND_SIZE[challenge.game] || ((n) => plural(n, 'question')))(challenge.itemCount)} · {attemptLine(challenge)}
                             </Typography>
                             {!play.canPlay && <Alert severity="info" sx={{ mb: 2 }}>{play.reason}</Alert>}
                             <Button

@@ -28,6 +28,8 @@ import TeacherClasses from '../features/teacher/pages/TeacherClasses';
 import ClassChallengesPage from '../features/teacher/pages/ClassChallengesPage';
 import ClassChallengeEditor from '../features/teacher/pages/ClassChallengeEditor';
 import JoinClass from '../features/student/pages/JoinClass';
+import StudentClassChallenges from '../features/student/pages/StudentClassChallenges';
+import PlayClassChallenge from '../features/student/pages/PlayClassChallenge';
 
 import TypingTest from '../features/typing-test/pages/TypingTest';
 import InstructorModule from '../features/teacher/pages/InstructorModule';
@@ -105,6 +107,8 @@ export const routes = [
 
   // Protected — student class enrollment (join via code)
   { path: '/classes/join',           element: <JoinClass />,              kind: 'protected', roles: ['STUDENT'] },
+  { path: '/class-challenges',       element: <StudentClassChallenges />, kind: 'protected', roles: ['STUDENT'] },
+  { path: '/class-challenges/:challengeId/play', element: <PlayClassChallenge />, kind: 'protected', roles: ['STUDENT'] },
 
   // Protected — staff
   { path: '/teacher/class',          element: <TeacherClassDashboard />,  kind: 'protected', roles: STAFF },

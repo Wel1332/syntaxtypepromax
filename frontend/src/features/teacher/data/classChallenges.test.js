@@ -7,7 +7,7 @@
 import { authFetch } from "../../../shared/api/authFetch";
 import {
     GAMES, blankItem, countBlanks, syncAnswers, validateChallenge, toRequest, fromChallenge,
-    listChallenges, createChallenge, updateChallenge, deleteChallenge, setVisibility, emptyForm,
+    listChallenges, createChallenge, updateChallenge, deleteChallenge, setVisibility, emptyForm, getResults,
 } from "./classChallenges";
 
 jest.mock("../../../shared/api/authFetch", () => ({ authFetch: jest.fn() }));
@@ -110,9 +110,29 @@ describe("toRequest / fromChallenge", () => {
         const roundTrip = toRequest("TRANSLATION", fromChallenge(saved));
         expect(roundTrip).toEqual({ ...saved, instructions: "" });
     });
+
+    test("a Bug Smasher line saved without a kind of bug opens with that field empty", () => {
+        const saved = {
+            game: "FALLING", title: "Bugs",
+            items: [
+                { buggy: "int a", correct: "int a;", category: "custom" },
+                { buggy: "x++", correct: "x++;", category: "missing semicolon" },
+            ],
+        };
+        expect(fromChallenge(saved).items.map((i) => i.category)).toEqual(["", "missing semicolon"]);
+    });
 });
 
 describe("API", () => {
+    test("loads a challenge's results", async () => {
+        authFetch.mockResolvedValue(response(200, { challenge: { challengeId: 3 }, students: [] }));
+
+        const result = await getResults(7, 3);
+
+        expect(authFetch).toHaveBeenCalledWith("/api/classes/7/challenges/3/results");
+        expect(result.ok).toBe(true);
+    });
+
     test("lists a class's challenges", async () => {
         authFetch.mockResolvedValue(response(200, [{ challengeId: 1 }]));
 

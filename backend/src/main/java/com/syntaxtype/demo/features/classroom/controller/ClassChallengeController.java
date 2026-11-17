@@ -5,6 +5,7 @@ import com.syntaxtype.demo.features.classroom.dto.ChallengeAttemptRequest;
 import com.syntaxtype.demo.features.classroom.dto.ChallengeAttemptResultDTO;
 import com.syntaxtype.demo.features.classroom.dto.ClassChallengeDTO;
 import com.syntaxtype.demo.features.classroom.dto.ClassChallengeRequest;
+import com.syntaxtype.demo.features.classroom.dto.ClassChallengeResultsDTO;
 import com.syntaxtype.demo.features.classroom.service.ClassChallengeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -62,6 +63,15 @@ public class ClassChallengeController {
             @RequestBody ClassChallengeRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
         return ResponseEntity.ok(service.update(classroomId, challengeId, principal.getUser(), request));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
+    @GetMapping("/api/classes/{classroomId}/challenges/{challengeId}/results")
+    public ResponseEntity<ClassChallengeResultsDTO> results(
+            @PathVariable Long classroomId,
+            @PathVariable Long challengeId,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        return ResponseEntity.ok(service.results(classroomId, challengeId, principal.getUser()));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")

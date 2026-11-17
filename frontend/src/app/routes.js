@@ -27,6 +27,7 @@ import TeacherClassDashboard from '../features/teacher/pages/TeacherClassDashboa
 import TeacherClasses from '../features/teacher/pages/TeacherClasses';
 import ClassChallengesPage from '../features/teacher/pages/ClassChallengesPage';
 import ClassChallengeEditor from '../features/teacher/pages/ClassChallengeEditor';
+import ClassChallengeResultsPage from '../features/teacher/pages/ClassChallengeResultsPage';
 import JoinClass from '../features/student/pages/JoinClass';
 import StudentClassChallenges from '../features/student/pages/StudentClassChallenges';
 import PlayClassChallenge from '../features/student/pages/PlayClassChallenge';
@@ -35,7 +36,6 @@ import TypingTest from '../features/typing-test/pages/TypingTest';
 import InstructorModule from '../features/teacher/pages/InstructorModule';
 import TranslationTerminal from '../features/translation-terminal/pages/TranslationTerminal';
 import FallingTypingTest from '../features/falling-code/pages/FallingTypingTest';
-import ChallengePage from '../features/teacher/pages/ChallengePage';
 import CreateLessonModule from '../features/lessons/pages/CreateLessonModule';
 import EditLessonModule from '../features/lessons/pages/EditLessonModule';
 import LessonDetail from '../features/lessons/pages/LessonDetail';
@@ -116,9 +116,11 @@ export const routes = [
   { path: '/teacher/classes/:classroomId/challenges',                  element: <ClassChallengesPage />,  kind: 'protected', roles: STAFF },
   { path: '/teacher/classes/:classroomId/challenges/new',              element: <ClassChallengeEditor />, kind: 'protected', roles: STAFF },
   { path: '/teacher/classes/:classroomId/challenges/:challengeId/edit', element: <ClassChallengeEditor />, kind: 'protected', roles: STAFF },
+  { path: '/teacher/classes/:classroomId/challenges/:challengeId/results', element: <ClassChallengeResultsPage />, kind: 'protected', roles: STAFF },
   { path: '/teacher/content',        element: <ContentManager />,         kind: 'protected', roles: STAFF },
   { path: '/instructor',             element: <InstructorModule />,       kind: 'protected', roles: STAFF },
-  { path: '/challenges',             element: <ChallengePage />,          kind: 'protected', roles: STAFF },
+  // The old challenge builder never reached students; challenges are made per class now.
+  { path: '/challenges',             kind: 'redirect',  redirect: '/teacher/classes' },
   { path: '/lesson',                 element: <CreateLessonModule />,     kind: 'protected', roles: STAFF },
   { path: '/lesson/edit/:id',        element: <EditLessonModule />,       kind: 'protected', roles: STAFF },
 

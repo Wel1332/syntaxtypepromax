@@ -43,7 +43,7 @@ const AllLessonsView = () => {
                 <Link to="/typingtest" onClick={toggleMenu}>Typing Test</Link>
                 <Link to="/instructor" onClick={toggleMenu}>Instructor</Link>
                 <Link to="/fallingtypingtest" onClick={toggleMenu}>Falling Typing</Link>
-                <Link to="/challenges" onClick={toggleMenu}>Challenges</Link>
+                <Link to="/teacher/classes" onClick={toggleMenu}>Class Challenges</Link>
                 <Link to="/lesson" onClick={toggleMenu}>Create Lesson</Link>
               </nav>
             </div>

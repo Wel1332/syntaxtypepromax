@@ -139,7 +139,7 @@ export default function InstructorModule() {
                 <Link to="/typingtest" onClick={toggleMenu}>Typing Test</Link>
                 <Link to="/instructor" onClick={toggleMenu}>Instructor Module</Link>
           
-                <Link to="/challenges" onClick={toggleMenu}>Challenges</Link>
+                <Link to="/teacher/classes" onClick={toggleMenu}>Class Challenges</Link>
                 <Link to="/lesson" onClick={toggleMenu}>Create Lesson</Link>
                 <Link to="/lessons/all" onClick={toggleMenu}>View All Lessons</Link> 
               </nav>
@@ -161,7 +161,7 @@ export default function InstructorModule() {
     <div className="tab-buttons">
       <button
         className={`tab-button ${activeTab === 'challenges' ? 'active' : ''}`}
-        onClick={() => navigate('/challenges')}
+        onClick={() => navigate('/teacher/classes')}
       >
         Challenges
       </button>

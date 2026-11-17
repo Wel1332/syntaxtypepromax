@@ -25,6 +25,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +72,7 @@ class ClassChallengeAccessTest {
     private User admin;
     private long classId;
     private long otherClassId;
+    private String classCode;
 
     // ── fixtures ──────────────────────────────────────────────────────────
 
@@ -86,6 +89,7 @@ class ClassChallengeAccessTest {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         classId = ((Number) JsonPath.read(created, "$.classroomId")).longValue();
         String code = JsonPath.read(created, "$.classCode");
+        classCode = code;
 
         String other = mockMvc.perform(post("/api/classes").with(as(otherTeacher))
                         .contentType(APPLICATION_JSON).content(json(Map.of("name", "Section B"))))
@@ -446,6 +450,106 @@ class ClassChallengeAccessTest {
             attempt(student, id, goodAttempt()).andExpect(status().isOk());
 
             assertThat(scoreRepository.count()).isEqualTo(before);
+        }
+    }
+
+    // ── results ───────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("results")
+    class Results {
+
+        private ResultActions results(User who, long cls, long id) throws Exception {
+            return mockMvc.perform(get("/api/classes/" + cls + "/challenges/" + id + "/results").with(as(who)));
+        }
+
+        private String resultsBody(long id) throws Exception {
+            return results(teacher, classId, id).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        }
+
+        private Map<String, Object> row(String body, User who) {
+            List<Map<String, Object>> rows = JsonPath.read(body, "$.students[?(@.username == '" + who.getUsername() + "')]");
+            assertThat(rows).hasSize(1);
+            return rows.get(0);
+        }
+
+        @SuppressWarnings("unchecked")
+        private List<Map<String, Object>> attemptsOf(Map<String, Object> row) {
+            return (List<Map<String, Object>>) row.get("attempts");
+        }
+
+        private Map<String, Object> scored(int score) {
+            return Map.of("score", score, "correctCount", 1, "totalCount", 2, "accuracy", 50, "durationSeconds", 40);
+        }
+
+        @Test
+        @DisplayName("list everyone in the class, played or not, with attempts newest first")
+        void everyoneInTheClass() throws Exception {
+            User quiet = user(Role.STUDENT);
+            mockMvc.perform(post("/api/classes/join").with(as(quiet))
+                            .contentType(APPLICATION_JSON).content(json(Map.of("classCode", classCode))))
+                    .andExpect(status().isOk());
+            long id = createdId(visible(sniperChallenge()));
+            attempt(student, id, scored(50)).andExpect(status().isOk());
+            attempt(student, id, scored(120)).andExpect(status().isOk());
+
+            String body = resultsBody(id);
+            assertThat((String) JsonPath.read(body, "$.challenge.title")).isEqualTo("Semicolon hunt");
+            assertThat((List<?>) JsonPath.read(body, "$.students")).hasSize(2);
+
+            Map<String, Object> played = row(body, student);
+            assertThat(played.get("enrolled")).isEqualTo(true);
+            assertThat(played.get("name")).isEqualTo(student.getUsername());
+            assertThat(attemptsOf(played)).extracting(a -> a.get("score")).containsExactly(120, 50);
+            assertThat(attemptsOf(played).get(0)).containsEntry("correctCount", 1).containsEntry("totalCount", 2)
+                    .containsEntry("accuracy", 50).containsEntry("durationSeconds", 40);
+
+            assertThat(row(body, quiet).get("enrolled")).isEqualTo(true);
+            assertThat(attemptsOf(row(body, quiet))).isEmpty();
+        }
+
+        @Test
+        @DisplayName("give each attempt's time as an instant, so it shows in the teacher's own time zone")
+        void timesAreInstants() throws Exception {
+            long id = createdId(visible(sniperChallenge()));
+            attempt(student, id, goodAttempt()).andExpect(status().isOk());
+
+            String submittedAt = (String) attemptsOf(row(resultsBody(id), student)).get(0).get("submittedAt");
+            assertThat(submittedAt).endsWith("Z");
+
+            Instant stored = attemptRepository.findAll().stream()
+                    .filter(a -> a.getChallenge().getChallengeId() == id)
+                    .findFirst().orElseThrow()
+                    .getSubmittedAt().atZone(ZoneId.systemDefault()).toInstant();
+            assertThat(Instant.parse(submittedAt)).isEqualTo(stored);
+        }
+
+        @Test
+        @DisplayName("keep a student who played and then left the class, marked as left")
+        void leaversStay() throws Exception {
+            long id = createdId(visible(sniperChallenge()));
+            attempt(student, id, goodAttempt()).andExpect(status().isOk());
+            long studentId = ((Number) row(resultsBody(id), student).get("studentId")).longValue();
+
+            mockMvc.perform(delete("/api/classes/" + classId + "/students/" + studentId).with(as(teacher)))
+                    .andExpect(status().is2xxSuccessful());
+
+            Map<String, Object> left = row(resultsBody(id), student);
+            assertThat(left.get("enrolled")).isEqualTo(false);
+            assertThat(attemptsOf(left)).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("are only for the class owner or an admin")
+        void ownerOnly() throws Exception {
+            long id = createdId(visible(sniperChallenge()));
+            attempt(student, id, goodAttempt()).andExpect(status().isOk());
+
+            results(otherTeacher, classId, id).andExpect(status().isForbidden());
+            results(student, classId, id).andExpect(status().isForbidden());
+            results(outsider, classId, id).andExpect(status().isForbidden());
+            results(otherTeacher, otherClassId, id).andExpect(status().isNotFound());
+            results(admin, classId, id).andExpect(status().isOk());
         }
     }
 }

@@ -258,6 +258,7 @@ export default function SyntaxSniper() {
         if (played) {
             drillLogRef.current.push({
                 itemId: played.id ?? null,
+                topic: played.topic ?? null,
                 difficulty: played.difficulty ?? null,
                 cleared,
                 timeMs: Math.max(0, Date.now() - drillStartRef.current),

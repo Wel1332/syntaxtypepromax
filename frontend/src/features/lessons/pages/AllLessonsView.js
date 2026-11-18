@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import '../../../css/AllLessonsView.css';
 import { API_BASE } from '../../../shared/api/client';
 import { authFetch } from '../../../shared/api/authFetch';
+import { isGameLocked } from '../../../shared/games/gameLocks';
 
 const AllLessonsView = () => {
   const navigate = useNavigate(); // ✅ Fixed: useNavigate was not initialized
@@ -40,7 +41,7 @@ const AllLessonsView = () => {
             <div className="side-menu" onClick={(e) => e.stopPropagation()}>
               <button className="close-button" onClick={toggleMenu}>×</button>
               <nav className="menu-links">
-                <Link to="/typingtest" onClick={toggleMenu}>Typing Test</Link>
+                {!isGameLocked('/typingtest') && <Link to="/typingtest" onClick={toggleMenu}>Typing Test</Link>}
                 <Link to="/instructor" onClick={toggleMenu}>Instructor</Link>
                 <Link to="/fallingtypingtest" onClick={toggleMenu}>Falling Typing</Link>
                 <Link to="/teacher/classes" onClick={toggleMenu}>Class Challenges</Link>

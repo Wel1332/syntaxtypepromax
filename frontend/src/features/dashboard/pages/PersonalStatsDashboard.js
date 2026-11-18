@@ -15,6 +15,7 @@ import { authFetch } from '../../../shared/api/authFetch';
 import { getUserId } from '../../../shared/auth/JwtUtils';
 import { getAuthToken } from '../../../shared/auth/AuthUtils';
 import { getScores as getLocalScores, getAttempts, MODE, GAME } from '../../../shared/assessment/modes';
+import { isGameLocked } from '../../../shared/games/gameLocks';
 
 const gradientText = {
     background: 'linear-gradient(90deg, #C8456D 0%, #E78AAC 50%, #FFC700 100%)',
@@ -551,7 +552,7 @@ const PersonalStatsDashboard = () => {
                 ) : typingStats.count === 0 ? (
                     <Card sx={{ mb: 4 }}>
                         <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                            <Typography sx={{ color: 'text.secondary' }}>No Typing Test sessions yet. <Button size="small" onClick={() => navigate('/typingtest')}>Play now →</Button></Typography>
+                            <Typography sx={{ color: 'text.secondary' }}>No Typing Test sessions yet.{!isGameLocked('/typingtest') && <> <Button size="small" onClick={() => navigate('/typingtest')}>Play now →</Button></>}</Typography>
                         </CardContent>
                     </Card>
                 ) : (

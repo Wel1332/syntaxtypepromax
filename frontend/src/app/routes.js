@@ -60,6 +60,8 @@ import ChangePasswordPage from '../features/account/pages/ChangePasswordPage';
 import ChangePasswordSignedOutPage from '../features/account/pages/ChangePasswordSignedOutPage';
 
 import NotFoundRedirect from './layout/NotFoundRedirect';
+import LockedGame from './layout/LockedGame';
+import { lockedGameAt } from '../shared/games/gameLocks';
 
 // Root chooser — landing page for guests, dashboard for authed users.
 const RootRedirect = () => {
@@ -78,6 +80,12 @@ const AdminSubRoutes = () => (
 const ALL = ['ADMIN', 'TEACHER', 'STUDENT', 'USER'];
 const STAFF = ['TEACHER', 'ADMIN'];
 const PLAYERS = ['STUDENT', 'TEACHER', 'ADMIN'];
+
+// A locked game keeps its route and its login check, but shows the lock instead of the game.
+const withGameLock = (route) => {
+  const game = lockedGameAt(route.path);
+  return game ? { ...route, element: <LockedGame name={game.name} /> } : route;
+};
 
 export const routes = [
   // Root
@@ -124,7 +132,7 @@ export const routes = [
   { path: '/lesson',                 element: <CreateLessonModule />,     kind: 'protected', roles: STAFF },
   { path: '/lesson/edit/:id',        element: <EditLessonModule />,       kind: 'protected', roles: STAFF },
 
-  // Games — playable by any logged-in player
+  // Games — any logged-in player; all but the study games are locked (shared/games/gameLocks.js)
   { path: '/typingtest',             element: <TypingTest />,             kind: 'protected', roles: PLAYERS },
   { path: '/syntax-sniper',          element: <SyntaxSniper />,           kind: 'protected', roles: PLAYERS },
   { path: '/translation-terminal',   element: <TranslationTerminal />,    kind: 'protected', roles: PLAYERS },
@@ -149,4 +157,4 @@ export const routes = [
 
   // Catch-all
   { path: '*',                       element: <NotFoundRedirect />,       kind: 'catch-all' },
-];
+].map(withGameLock);

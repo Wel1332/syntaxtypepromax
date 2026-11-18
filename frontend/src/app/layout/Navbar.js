@@ -44,8 +44,10 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import LockIcon from '@mui/icons-material/Lock';
 import Tooltip from '@mui/material/Tooltip';
 import { useThemeMode } from '../../shared/theme/ThemeContext';
+import { isGameLocked } from '../../shared/games/gameLocks';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -76,9 +78,10 @@ const Navbar = () => {
         {
             title: 'Games',
             items: [
-                { text: 'Typing Test', link: '/typingtest', icon: <KeyboardIcon /> },
                 { text: 'Syntax Sniper', link: '/syntax-sniper', icon: <GpsFixedIcon /> },
                 { text: 'Translation Terminal', link: '/translation-terminal', icon: <TerminalIcon /> },
+                { text: 'Falling Code', link: '/fallingtypingtest', icon: <CloudDownloadIcon /> },
+                { text: 'Typing Test', link: '/typingtest', icon: <KeyboardIcon /> },
                 { text: 'Galaxy Mode', link: '/galaxy-new', icon: <RocketLaunchIcon /> },
                 { text: 'Bookworm', link: '/bookworm', icon: <MenuBookIcon /> },
                 { text: 'Quiz', link: '/quiz', icon: <ExtensionIcon /> },
@@ -186,12 +189,14 @@ const Navbar = () => {
                             {section.items.map((item) => (
                                 <ListItem key={item.link} disablePadding sx={{ px: 1 }}>
                                     <ListItemButton
+                                        disabled={isGameLocked(item.link)}
                                         onClick={() => handleNavigation(item.link)}
                                         sx={{
                                             borderRadius: 1.5,
                                             py: 1,
                                             px: 1.5,
                                             transition: 'all 150ms',
+                                            '&.Mui-disabled': { opacity: 0.55 },
                                             '&:hover': {
                                                 bgcolor: 'rgba(200,69,109,0.12)',
                                                 transform: 'translateX(4px)',
@@ -219,6 +224,7 @@ const Navbar = () => {
                                                 },
                                             }}
                                         />
+                                        {isGameLocked(item.link) && <LockIcon titleAccess="Locked" fontSize="small" sx={{ color: 'text.secondary' }} />}
                                     </ListItemButton>
                                 </ListItem>
                             ))}

@@ -1,23 +1,27 @@
-// Objective 3.2 — >=30 challenges covering declarations, control structures,
-// functions, pointers, structs and preprocessor.
+// Objective 3.2 — >=30 challenges per bank, spread across the course's four
+// topics: basic programming, conditionals, loops and functions.
 //
-// The banks previously held 30 prompts *between them* (16 + 14), with ~17
-// declarations and zero structs. Counting alone therefore proved nothing about
-// whether the objective was met, which is what these tests exist to fix.
+// An earlier bank held 30 prompts *between* its two halves, most of them on one
+// topic. Counting alone therefore proved nothing about coverage, which is what
+// these tests exist to fix.
 
 import { practiceBank, testBank, coverageOf, TOPICS } from './translationPrompts';
 
 const banks = [
-    ['practiceBank', practiceBank],
-    ['testBank', testBank],
+    ['practiceBank', practiceBank, /^P2-\d{2}$/],
+    ['testBank', testBank, /^T2-\d{2}$/],
 ];
 
-describe.each(banks)('%s (Objective 3.2)', (name, bank) => {
+describe.each(banks)('%s (Objective 3.2)', (name, bank, idPattern) => {
     it('holds at least 30 challenges on its own', () => {
         expect(bank.length).toBeGreaterThanOrEqual(30);
     });
 
-    it('covers every one of the six required syntax areas', () => {
+    it('uses second-set ids, so results never mix with the first question set', () => {
+        bank.forEach((p) => expect(p.id).toMatch(idPattern));
+    });
+
+    it('covers each of the four course topics', () => {
         const coverage = coverageOf(bank);
         TOPICS.forEach((topic) => {
             expect(coverage[topic]).toBeGreaterThan(0);

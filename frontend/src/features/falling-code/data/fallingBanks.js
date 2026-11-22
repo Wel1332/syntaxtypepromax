@@ -8,39 +8,45 @@
 //   display in red and require the corrected syntax to clear.
 // `sequenceBlocks` are arrays of 2–3 consecutive lines that must be typed
 //   in execution order when they drop together as a group.
+//
+// Everything stays within the course's four topics: basic programming,
+// conditionals, loops and functions.
+
+// Basic C has only so many keywords, so both banks share one list. Typing a
+// keyword gives nothing away; every other pool differs between the banks.
+const WORDS = [
+    "int", "float", "double", "char", "void", "main", "return", "printf",
+    "scanf", "include", "const", "sizeof", "if", "else", "switch", "case",
+    "break", "default", "for", "while", "do", "continue", "long", "short",
+];
 
 export const practiceBank = {
-    words: [
-        "int", "float", "double", "char", "void", "return", "if", "else",
-        "for", "while", "do", "switch", "case", "break", "continue",
-        "printf", "scanf", "main", "include", "struct", "typedef",
-        "const", "static", "sizeof", "true", "false", "long", "short",
-    ],
+    words: WORDS,
     wrongWords: [
-        { buggy: "pointr",     correct: "pointer" },
-        { buggy: "funtion",    correct: "function" },
-        { buggy: "paramater",  correct: "parameter" },
-        { buggy: "arguement",  correct: "argument" },
-        { buggy: "retrun",     correct: "return" },
-        { buggy: "pirntf",     correct: "printf" },
-        { buggy: "scnaf",      correct: "scanf" },
-        { buggy: "incldue",    correct: "include" },
-        { buggy: "strcut",     correct: "struct" },
-        { buggy: "voild",      correct: "void" },
-        { buggy: "flaot",      correct: "float" },
-        { buggy: "chra",       correct: "char" },
+        { buggy: "pirntf", correct: "printf" },
+        { buggy: "scnaf", correct: "scanf" },
+        { buggy: "retrun", correct: "return" },
+        { buggy: "flaot", correct: "float" },
+        { buggy: "whlie", correct: "while" },
+        { buggy: "swtich", correct: "switch" },
+        { buggy: "esle", correct: "else" },
+        { buggy: "mian", correct: "main" },
+        { buggy: "incldue", correct: "include" },
+        { buggy: "viod", correct: "void" },
     ],
     codeLines: [
+        "int age = 15;",
+        "float price = 9.5;",
         'printf("Hello!\\n");',
-        'int x = 0;',
-        'for (int i = 0; i < n; i++)',
-        'if (x > 0) x++;',
-        'scanf("%d", &n);',
-        'while (i < 10) i++;',
-        'int a[5];',
-        'return 0;',
-        'char c = \'A\';',
-        '#include <stdio.h>',
+        'scanf("%d", &age);',
+        "if (age >= 18)",
+        "else if (age > 12)",
+        "switch (choice)",
+        "for (int i = 0; i < 5; i++)",
+        "while (count > 0)",
+        "sum = sum + i;",
+        "void greet()",
+        "return 0;",
     ],
     // Full-line bugs: display the buggy form, player must type the correct form.
     // `category` tags the error type (OBJ1 — support >=4 categories):
@@ -48,75 +54,75 @@ export const practiceBank = {
     //   malformed-declaration | wrong-operator. (wrongWords above are all the
     //   incorrect-keyword category.)
     buggyLines: [
-        { buggy: 'printf("Hello!\\n")',     correct: 'printf("Hello!\\n");',  category: 'missing-terminator' },
-        { buggy: 'int x = 0',              correct: 'int x = 0;',            category: 'missing-terminator' },
-        { buggy: 'if (x > 0) x++',         correct: 'if (x > 0) x++;',       category: 'missing-terminator' },
-        { buggy: 'return 0',               correct: 'return 0;',             category: 'missing-terminator' },
-        { buggy: 'int a[5]',               correct: 'int a[5];',             category: 'malformed-declaration' },
-        { buggy: 'scanf("%d", n);',         correct: 'scanf("%d", &n);',      category: 'malformed-declaration' },
-        { buggy: 'while (i < 10) i--',     correct: 'while (i < 10) i++;',   category: 'wrong-operator' },
-        { buggy: 'if (x > 0 { x++; }',     correct: 'if (x > 0) { x++; }',   category: 'mismatched-delimiter' },
+        { buggy: "int age = 15", correct: "int age = 15;", category: "missing-terminator" },
+        { buggy: 'printf("Hi")', correct: 'printf("Hi");', category: "missing-terminator" },
+        { buggy: "if (age >= 18 {", correct: "if (age >= 18) {", category: "mismatched-delimiter" },
+        { buggy: "void greet( {", correct: "void greet() {", category: "mismatched-delimiter" },
+        { buggy: "whil (n > 0)", correct: "while (n > 0)", category: "incorrect-keyword" },
+        { buggy: "int x 5;", correct: "int x = 5;", category: "malformed-declaration" },
+        { buggy: "if (x = 10)", correct: "if (x == 10)", category: "wrong-operator" },
+        { buggy: "sum =+ i;", correct: "sum += i;", category: "wrong-operator" },
     ],
     // Sequence blocks: 2–3 lines that must be typed in listed order.
     sequenceBlocks: [
-        ['int a = 5;',          'int b = 3;',             'printf("%d", a + b);'],
-        ['int x = 0;',          'x = x + 1;',             'printf("%d", x);'],
-        ['char name[20];',      'scanf("%s", name);',     'printf("Hi %s", name);'],
-        ['int n = 10;',         'for (int i = 0; i < n; i++)', 'printf("%d ", i);'],
-        ['int *p = malloc(4);', '*p = 42;',               'free(p);'],
+        ["int a = 2;", "int b = 3;", 'printf("%d", a + b);'],
+        ["int age;", 'scanf("%d", &age);', 'printf("%d", age);'],
+        ["int n = 4;", "if (n > 0)", 'printf("positive");'],
+        ["int sum = 0;", "for (int i = 1; i <= 3; i++)", "sum += i;"],
+        ["int r = twice(5);", 'printf("%d", r);', "return 0;"],
     ],
 };
 
 export const testBank = {
-    words: [
-        "malloc", "free", "NULL", "size_t", "uint8_t", "FILE",
-        "fopen", "fclose", "fprintf", "fscanf", "memcpy", "memset",
-        "strcmp", "strcpy", "strlen", "atoi", "atof", "exit",
-        "register", "volatile", "extern", "union", "enum",
-    ],
+    words: WORDS,
     wrongWords: [
-        { buggy: "mallc",      correct: "malloc" },
-        { buggy: "freee",      correct: "free" },
-        { buggy: "NUUL",       correct: "NULL" },
-        { buggy: "sizeoff",    correct: "sizeof" },
-        { buggy: "stcmp",      correct: "strcmp" },
-        { buggy: "memcopy",    correct: "memcpy" },
-        { buggy: "fpritf",     correct: "fprintf" },
-        { buggy: "fclos",      correct: "fclose" },
-        { buggy: "exitt",      correct: "exit" },
-        { buggy: "voltile",    correct: "volatile" },
-        { buggy: "exterm",     correct: "extern" },
-        { buggy: "tyepdef",    correct: "typedef" },
+        { buggy: "prinft", correct: "printf" },
+        { buggy: "sacnf", correct: "scanf" },
+        { buggy: "reutrn", correct: "return" },
+        { buggy: "itn", correct: "int" },
+        { buggy: "wihle", correct: "while" },
+        { buggy: "fro", correct: "for" },
+        { buggy: "defualt", correct: "default" },
+        { buggy: "brake", correct: "break" },
+        { buggy: "dobule", correct: "double" },
+        { buggy: "contniue", correct: "continue" },
     ],
     codeLines: [
-        'int *arr = malloc(n * sizeof(int));',
-        'if (ptr != NULL) free(ptr);',
-        'printf("Result: %d\\n", result);',
-        'for (int i = 0; i < count; i++)',
-        'struct Node *head = NULL;',
-        'return EXIT_SUCCESS;',
-        'typedef struct Point Point;',
-        'fprintf(stderr, "Error\\n");',
-        'memset(buffer, 0, sizeof(buffer));',
-        'while ((c = getchar()) != EOF)',
-        'const char *name = "syntaxtype";',
-        'int main(int argc, char **argv)',
+        "int score = 100;",
+        "char grade = 'B';",
+        'printf("Score: %d\\n", score);',
+        'scanf("%f", &weight);',
+        "if (score > 50)",
+        "else if (score == 50)",
+        "case 2: break;",
+        "for (int i = 1; i <= 10; i++)",
+        "while (lives > 0)",
+        "total += n;",
+        "int add(int a, int b)",
+        "return total;",
     ],
+    // Full-line bugs: display the buggy form, player must type the correct form.
+    // `category` tags the error type (OBJ1 — support >=4 categories):
+    //   missing-terminator | mismatched-delimiter | incorrect-keyword |
+    //   malformed-declaration | wrong-operator. (wrongWords above are all the
+    //   incorrect-keyword category.)
     buggyLines: [
-        { buggy: 'int *arr = malloc(n * sizeof(int))',        correct: 'int *arr = malloc(n * sizeof(int));', category: 'missing-terminator' },
-        { buggy: 'if (ptr = NULL) free(ptr);',               correct: 'if (ptr != NULL) free(ptr);',        category: 'wrong-operator' },
-        { buggy: 'return EXIT_FAILURE;',                     correct: 'return EXIT_SUCCESS;',                category: 'incorrect-keyword' },
-        { buggy: 'memset(buffer, 1, sizeof(buffer));',       correct: 'memset(buffer, 0, sizeof(buffer));',  category: 'wrong-operator' },
-        { buggy: 'struct Node *head = head;',                correct: 'struct Node *head = NULL;',           category: 'malformed-declaration' },
-        { buggy: 'const char *name = syntaxtype;',           correct: 'const char *name = "syntaxtype";',    category: 'malformed-declaration' },
-        { buggy: 'int main(int argc, char **argv {',         correct: 'int main(int argc, char **argv) {',   category: 'mismatched-delimiter' },
+        { buggy: "int score = 0", correct: "int score = 0;", category: "missing-terminator" },
+        { buggy: 'scanf("%d", &n)', correct: 'scanf("%d", &n);', category: "missing-terminator" },
+        { buggy: "while (lives > 0 {", correct: "while (lives > 0) {", category: "mismatched-delimiter" },
+        { buggy: "int add(int a, int b {", correct: "int add(int a, int b) {", category: "mismatched-delimiter" },
+        { buggy: "fi (score > 50)", correct: "if (score > 50)", category: "incorrect-keyword" },
+        { buggy: "float price 2.5;", correct: "float price = 2.5;", category: "malformed-declaration" },
+        { buggy: "if (n = 0)", correct: "if (n == 0)", category: "wrong-operator" },
+        { buggy: "total =+ n;", correct: "total += n;", category: "wrong-operator" },
     ],
+    // Sequence blocks: 2–3 lines that must be typed in listed order.
     sequenceBlocks: [
-        ['int *arr = malloc(n * sizeof(int));', 'memset(arr, 0, n * sizeof(int));', 'free(arr);'],
-        ['FILE *f = fopen("data.txt", "r");',   'fscanf(f, "%d", &n);',             'fclose(f);'],
-        ['int len = strlen(str);',              'char *copy = malloc(len + 1);',    'strcpy(copy, str);'],
-        ['int sum = 0;',                        'for (int i = 0; i < n; i++)',      'sum += arr[i];'],
-        ['struct Node *node = malloc(sizeof(struct Node));', 'node->data = val;',   'node->next = NULL;'],
+        ["int x = 7;", "int y = 8;", 'printf("%d", x * y);'],
+        ["float w;", 'scanf("%f", &w);', 'printf("%.1f", w);'],
+        ["int t = 35;", "if (t > 30)", 'printf("hot");'],
+        ["int i = 0;", "while (i < 3)", "i++;"],
+        ["int s = square(3);", 'printf("%d", s);', "return 0;"],
     ],
 };
 

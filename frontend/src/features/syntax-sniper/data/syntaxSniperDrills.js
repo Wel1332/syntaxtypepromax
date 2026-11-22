@@ -4,76 +4,220 @@
 // expected char for the i-th underscore (left-to-right reading order).
 //
 // `practiceBank` and `testBank` are deliberately distinct sets so students
-// who drill in Practice don't memorise the Pre-/Post-Test items. Both banks
-// span easy/medium/hard so the game can pull a varied session from either.
+// who drill in Practice don't memorise the Pre-/Post-Test items. Each bank has
+// five drills for each of the course's four topics (shared/assessment/topics.js).
+//
+// Ids carry a 2 (P2-, T2-): every drill played is stored by id in
+// drill_attempts, so reusing a first-set id would mix two questions' results.
 
 export const practiceBank = [
     {
-        id: "P-01",
-        title: "Print a greeting",
+        id: "P2-01",
+        title: "Print your name",
+        topic: "basics",
         difficulty: "easy",
         code: `int main()
 {
-    printf("Hello, World!")_
+    printf("My name is Ana")_
     return 0_
 }`,
         answers: [";", ";"],
     },
     {
-        id: "P-02",
-        title: "Two variables",
+        id: "P2-02",
+        title: "Age next year",
+        topic: "basics",
         difficulty: "easy",
         code: `int main()
 {
-    int a = 4_
-    int b = 6_
-    printf("%d"_ a + b)_
+    int age = 15_
+    printf("%d"_ age + 1)_
+    return 0_
+}`,
+        answers: [";", ",", ";", ";"],
+    },
+    {
+        id: "P2-03",
+        title: "Price of two",
+        topic: "basics",
+        difficulty: "medium",
+        code: `int main()
+{
+    float price = 2.5_
+    float total = price * 2_
+    printf("%.2f"_ total)_
     return 0_
 }`,
         answers: [";", ";", ",", ";", ";"],
     },
     {
-        id: "P-03",
-        title: "Read an int",
-        difficulty: "easy",
+        id: "P2-04",
+        title: "Read a number",
+        topic: "basics",
+        difficulty: "medium",
         code: `int main()
 {
-    int n_
-    scanf("%d"_ &n)_
-    printf("%d"_ n)_
+    int num_
+    scanf("%d"_ &num)_
+    printf("You typed %d"_ num)_
     return 0_
 }`,
         answers: [";", ",", ";", ",", ";", ";"],
     },
     {
-        id: "P-04",
-        title: "Even or odd",
+        id: "P2-05",
+        title: "Show a grade",
+        topic: "basics",
         difficulty: "easy",
         code: `int main()
 {
-    int x = 8_
-    if (x % 2 == 0)
+    char grade = 'A'_
+    printf("Grade: %c"_ grade)_
+    return 0_
+}`,
+        answers: [";", ",", ";", ";"],
+    },
     {
-        printf("even")_
+        id: "P2-06",
+        title: "Pass or fail",
+        topic: "conditionals",
+        difficulty: "easy",
+        code: `int main()
+{
+    int score = 80_
+    if (score >= 75)
+    {
+        printf("Pass")_
     }
     else
     {
-        printf("odd")_
+        printf("Fail")_
     }
     return 0_
 }`,
         answers: [";", ";", ";", ";"],
     },
     {
-        id: "P-05",
-        title: "Sum 1 to 5",
+        id: "P2-07",
+        title: "Positive number",
+        topic: "conditionals",
+        difficulty: "easy",
+        code: `int main()
+{
+    int n = 5_
+    if (n > 0)
+    {
+        printf("positive")_
+    }
+    return 0_
+}`,
+        answers: [";", ";", ";"],
+    },
+    {
+        id: "P2-08",
+        title: "Bigger number",
+        topic: "conditionals",
+        difficulty: "medium",
+        code: `int main()
+{
+    int a = 7_
+    int b = 3_
+    if (a > b)
+    {
+        printf("%d"_ a)_
+    }
+    else
+    {
+        printf("%d"_ b)_
+    }
+    return 0_
+}`,
+        answers: [";", ";", ",", ";", ",", ";", ";"],
+    },
+    {
+        id: "P2-09",
+        title: "Hot, warm or cold",
+        topic: "conditionals",
+        difficulty: "medium",
+        code: `int main()
+{
+    int temp = 30_
+    if (temp > 32)
+    {
+        printf("hot")_
+    }
+    else if (temp > 20)
+    {
+        printf("warm")_
+    }
+    else
+    {
+        printf("cold")_
+    }
+    return 0_
+}`,
+        answers: [";", ";", ";", ";", ";"],
+    },
+    {
+        id: "P2-10",
+        title: "Menu choice",
+        topic: "conditionals",
+        difficulty: "medium",
+        code: `int main()
+{
+    int choice = 2_
+    switch (choice)
+    {
+        case 1: printf("Start")_ break_
+        case 2: printf("Quit")_ break_
+    }
+    return 0_
+}`,
+        answers: [";", ";", ";", ";", ";", ";"],
+    },
+    {
+        id: "P2-11",
+        title: "Count to 3",
+        topic: "loops",
+        difficulty: "easy",
+        code: `int main()
+{
+    for (int i = 1_ i <= 3_ i++)
+    {
+        printf("%d "_ i)_
+    }
+    return 0_
+}`,
+        answers: [";", ";", ",", ";", ";"],
+    },
+    {
+        id: "P2-12",
+        title: "Say hi 3 times",
+        topic: "loops",
+        difficulty: "easy",
+        code: `int main()
+{
+    int i = 0_
+    while (i < 3)
+    {
+        printf("hi ")_
+        i++_
+    }
+    return 0_
+}`,
+        answers: [";", ";", ";", ";"],
+    },
+    {
+        id: "P2-13",
+        title: "Add 1 to 10",
+        topic: "loops",
         difficulty: "medium",
         code: `int main()
 {
     int sum = 0_
-    for (int i = 1_ i <= 5_ i++)
+    for (int i = 1_ i <= 10_ i++)
     {
-        sum += i_
+        sum = sum + i_
     }
     printf("%d"_ sum)_
     return 0_
@@ -81,59 +225,13 @@ export const practiceBank = [
         answers: [";", ";", ";", ";", ",", ";", ";"],
     },
     {
-        id: "P-06",
-        title: "Char compare",
-        difficulty: "medium",
-        code: `int main()
-{
-    char c = 'A'_
-    if (c == 'A')
-    {
-        printf("got A")_
-    }
-    return 0_
-}`,
-        answers: [";", ";", ";"],
-    },
-    {
-        id: "P-07",
-        title: "Function call",
-        difficulty: "medium",
-        code: `int square(int n)
-{
-    return n * n_
-}
-
-int main()
-{
-    int r = square(5)_
-    printf("%d"_ r)_
-    return 0_
-}`,
-        answers: [";", ";", ",", ";", ";"],
-    },
-    {
-        id: "P-08",
-        title: "Array fill",
-        difficulty: "medium",
-        code: `int main()
-{
-    int arr[3] = {1_ 2_ 3}_
-    for (int i = 0_ i < 3_ i++)
-    {
-        printf("%d "_ arr[i])_
-    }
-    return 0_
-}`,
-        answers: [",", ",", ";", ";", ";", ",", ";", ";"],
-    },
-    {
-        id: "P-09",
+        id: "P2-14",
         title: "Countdown",
+        topic: "loops",
         difficulty: "medium",
         code: `int main()
 {
-    int n = 3_
+    int n = 5_
     while (n > 0)
     {
         printf("%d "_ n)_
@@ -144,241 +242,253 @@ int main()
         answers: [";", ",", ";", ";", ";"],
     },
     {
-        id: "P-10",
-        title: "String length",
-        difficulty: "hard",
-        code: `#include <string.h>
-int main()
+        id: "P2-15",
+        title: "Do-while",
+        topic: "loops",
+        difficulty: "medium",
+        code: `int main()
 {
-    char s[] = "syntax"_
-    int len = strlen(s)_
-    printf("%d"_ len)_
+    int x = 1_
+    do
+    {
+        printf("%d "_ x)_
+        x++_
+    } while (x <= 3)_
     return 0_
 }`,
-        answers: [";", ";", ",", ";", ";"],
+        answers: [";", ",", ";", ";", ";", ";"],
     },
     {
-        id: "P-11",
-        title: "Max of two",
-        difficulty: "hard",
-        code: `int max(int a_ int b)
+        id: "P2-16",
+        title: "Hello function",
+        topic: "functions",
+        difficulty: "easy",
+        code: `void sayHello()
 {
-    return (a > b) ? a : b_
+    printf("Hello")_
 }
 
 int main()
 {
-    int m = max(7_ 12)_
-    printf("%d"_ m)_
-    return 0_
-}`,
-        answers: [",", ";", ",", ";", ",", ";", ";"],
-    },
-    {
-        id: "P-12",
-        title: "Pointer basics",
-        difficulty: "hard",
-        code: `int main()
-{
-    int v = 42_
-    int *p = &v_
-    printf("%d"_ *p)_
-    return 0_
-}`,
-        answers: [";", ";", ",", ";", ";"],
-    },
-    {
-        id: "P-13",
-        title: "Triple print",
-        difficulty: "easy",
-        code: `int main()
-{
-    printf("A")_
-    printf("B")_
-    printf("C")_
-    return 0_
-}`,
-        answers: [";", ";", ";", ";"],
-    },
-    {
-        id: "P-14",
-        title: "Add three",
-        difficulty: "easy",
-        code: `int main()
-{
-    int a = 1_ b = 2_ c = 3_
-    printf("%d"_ a + b + c)_
-    return 0_
-}`,
-        answers: [",", ",", ";", ",", ";", ";"],
-    },
-    {
-        id: "P-15",
-        title: "While sum",
-        difficulty: "medium",
-        code: `int main()
-{
-    int i = 1_ sum = 0_
-    while (i <= 4)
-    {
-        sum += i_
-        i++_
-    }
-    printf("%d"_ sum)_
-    return 0_
-}`,
-        answers: [",", ";", ";", ";", ",", ";", ";"],
-    },
-    {
-        id: "P-16",
-        title: "Nested loop",
-        difficulty: "medium",
-        code: `int main()
-{
-    for (int i = 0_ i < 2_ i++)
-    {
-        for (int j = 0_ j < 2_ j++)
-        {
-            printf("%d%d "_ i_ j)_
-        }
-    }
-    return 0_
-}`,
-        answers: [";", ";", ";", ";", ",", ",", ";", ";"],
-    },
-    {
-        id: "P-17",
-        title: "Void function",
-        difficulty: "medium",
-        code: `void greet()
-{
-    printf("hi")_
-}
-
-int main()
-{
-    greet()_
+    sayHello()_
     return 0_
 }`,
         answers: [";", ";", ";"],
     },
     {
-        id: "P-18",
-        title: "Ternary sign",
+        id: "P2-17",
+        title: "Double it",
+        topic: "functions",
         difficulty: "medium",
-        code: `int main()
+        code: `int twice(int n)
 {
-    int x = 5_
-    int s = (x > 0) ? 1 : -1_
-    printf("%d"_ s)_
+    return n * 2_
+}
+
+int main()
+{
+    int r = twice(4)_
+    printf("%d"_ r)_
     return 0_
 }`,
         answers: [";", ";", ",", ";", ";"],
     },
     {
-        id: "P-19",
-        title: "Array average",
-        difficulty: "hard",
-        code: `int main()
+        id: "P2-18",
+        title: "Add two numbers",
+        topic: "functions",
+        difficulty: "medium",
+        code: `int add(int a_ int b)
 {
-    int a[4] = {2_ 4_ 6_ 8}_
-    int sum = 0_
-    for (int i = 0_ i < 4_ i++)
-    {
-        sum += a[i]_
-    }
-    printf("%d"_ sum / 4)_
-    return 0_
-}`,
-        answers: [",", ",", ",", ";", ";", ";", ";", ";", ",", ";", ";"],
-    },
-    {
-        id: "P-20",
-        title: "Swap via pointers",
-        difficulty: "hard",
-        code: `void swap(int *a_ int *b)
-{
-    int t = *a_
-    *a = *b_
-    *b = t_
+    return a + b_
 }
 
 int main()
 {
-    int x = 1_ y = 2_
-    swap(&x_ &y)_
+    printf("%d"_ add(2_ 3))_
     return 0_
 }`,
-        answers: [",", ";", ";", ";", ",", ";", ",", ";", ";"],
+        answers: [",", ";", ",", ",", ";", ";"],
     },
     {
-        id: "P-21",
-        title: "Macro constant",
-        difficulty: "hard",
-        code: `#define MAX 100
-int main()
+        id: "P2-19",
+        title: "Draw two lines",
+        topic: "functions",
+        difficulty: "easy",
+        code: `void line()
 {
-    int n = MAX_
-    printf("%d"_ n)_
-    return 0_
-}`,
-        answers: [";", ",", ";", ";"],
-    },
-    {
-        id: "P-22",
-        title: "Struct declare",
-        difficulty: "hard",
-        code: `struct Box { int w_ int h_ }_
+    printf("-----")_
+}
 
 int main()
 {
-    struct Box b = {3_ 5}_
-    printf("%d"_ b.w * b.h)_
+    line()_
+    line()_
     return 0_
 }`,
-        answers: [";", ";", ";", ",", ";", ",", ";", ";"],
+        answers: [";", ";", ";", ";"],
+    },
+    {
+        id: "P2-20",
+        title: "Is it even?",
+        topic: "functions",
+        difficulty: "hard",
+        code: `int isEven(int n)
+{
+    if (n % 2 == 0)
+    {
+        return 1_
+    }
+    return 0_
+}
+
+int main()
+{
+    printf("%d"_ isEven(6))_
+    return 0_
+}`,
+        answers: [";", ";", ",", ";", ";"],
     },
 ];
 
 export const testBank = [
     {
-        id: "T-01",
-        title: "Multi-var declare",
+        id: "T2-01",
+        title: "Greeting",
+        topic: "basics",
         difficulty: "easy",
         code: `int main()
 {
-    int x = 5_ y = 10_ z = 15_
-    printf("%d %d %d"_ x_ y_ z)_
+    printf("Good morning")_
     return 0_
 }`,
-        answers: [",", ",", ";", ",", ",", ",", ";", ";"],
+        answers: [";", ";"],
     },
     {
-        id: "T-02",
-        title: "Format three values",
+        id: "T2-02",
+        title: "Year of birth",
+        topic: "basics",
         difficulty: "easy",
         code: `int main()
 {
-    int a = 1_
-    int b = 2_
-    int c = a + b_
-    printf("a=%d b=%d c=%d"_ a_ b_ c)_
+    int year = 2010_
+    printf("Born in %d"_ year)_
     return 0_
 }`,
-        answers: [";", ";", ";", ",", ",", ",", ";", ";"],
+        answers: [";", ",", ";", ";"],
     },
     {
-        id: "T-03",
-        title: "Grade ladder",
+        id: "T2-03",
+        title: "Area of a rectangle",
+        topic: "basics",
         difficulty: "medium",
         code: `int main()
 {
-    int score = 73_
+    int length = 4_
+    int width = 3_
+    int area = length * width_
+    printf("%d"_ area)_
+    return 0_
+}`,
+        answers: [";", ";", ";", ",", ";", ";"],
+    },
+    {
+        id: "T2-04",
+        title: "Read your age",
+        topic: "basics",
+        difficulty: "medium",
+        code: `int main()
+{
+    int age_
+    scanf("%d"_ &age)_
+    printf("Age: %d"_ age)_
+    return 0_
+}`,
+        answers: [";", ",", ";", ",", ";", ";"],
+    },
+    {
+        id: "T2-05",
+        title: "Average of two",
+        topic: "basics",
+        difficulty: "medium",
+        code: `int main()
+{
+    float a = 85.5_
+    float b = 90.0_
+    printf("%.1f"_ (a + b) / 2)_
+    return 0_
+}`,
+        answers: [";", ";", ",", ";", ";"],
+    },
+    {
+        id: "T2-06",
+        title: "Can vote?",
+        topic: "conditionals",
+        difficulty: "easy",
+        code: `int main()
+{
+    int age = 17_
+    if (age >= 18)
+    {
+        printf("Can vote")_
+    }
+    else
+    {
+        printf("Too young")_
+    }
+    return 0_
+}`,
+        answers: [";", ";", ";", ";"],
+    },
+    {
+        id: "T2-07",
+        title: "Negative number",
+        topic: "conditionals",
+        difficulty: "easy",
+        code: `int main()
+{
+    int n = -4_
+    if (n < 0)
+    {
+        printf("negative")_
+    }
+    return 0_
+}`,
+        answers: [";", ";", ";"],
+    },
+    {
+        id: "T2-08",
+        title: "Odd or even",
+        topic: "conditionals",
+        difficulty: "medium",
+        code: `int main()
+{
+    int x = 9_
+    if (x % 2 == 0)
+    {
+        printf("%d is even"_ x)_
+    }
+    else
+    {
+        printf("%d is odd"_ x)_
+    }
+    return 0_
+}`,
+        answers: [";", ",", ";", ",", ";", ";"],
+    },
+    {
+        id: "T2-09",
+        title: "Letter grade",
+        topic: "conditionals",
+        difficulty: "medium",
+        code: `int main()
+{
+    int score = 85_
     if (score >= 90)
     {
         printf("A")_
     }
-    else if (score >= 75)
+    else if (score >= 80)
     {
         printf("B")_
     }
@@ -391,173 +501,80 @@ export const testBank = [
         answers: [";", ";", ";", ";", ";"],
     },
     {
-        id: "T-04",
-        title: "Factorial",
-        difficulty: "medium",
-        code: `int main()
-{
-    int n = 5_ f = 1_
-    for (int i = 1_ i <= n_ i++)
-    {
-        f *= i_
-    }
-    printf("%d"_ f)_
-    return 0_
-}`,
-        answers: [",", ";", ";", ";", ";", ",", ";", ";"],
-    },
-    {
-        id: "T-05",
-        title: "Switch on day",
-        difficulty: "medium",
-        code: `int main()
-{
-    int d = 3_
-    switch (d)
-    {
-        case 1: printf("Mon")_ break_
-        case 2: printf("Tue")_ break_
-        case 3: printf("Wed")_ break_
-        default: printf("?")_
-    }
-    return 0_
-}`,
-        answers: [";", ";", ";", ";", ";", ";", ";", ";", ";"],
-    },
-    {
-        id: "T-06",
-        title: "Two-arg function",
-        difficulty: "medium",
-        code: `int add(int a_ int b)
-{
-    return a + b_
-}
-
-int main()
-{
-    int s = add(3_ 4)_
-    printf("%d"_ s)_
-    return 0_
-}`,
-        answers: [",", ";", ",", ";", ",", ";", ";"],
-    },
-    {
-        id: "T-07",
-        title: "Array sum",
+        id: "T2-10",
+        title: "Day name",
+        topic: "conditionals",
         difficulty: "hard",
         code: `int main()
 {
-    int arr[5] = {2_ 4_ 6_ 8_ 10}_
-    int sum = 0_
-    for (int i = 0_ i < 5_ i++)
+    int day = 1_
+    switch (day)
     {
-        sum += arr[i]_
+        case 1: printf("Monday")_ break_
+        case 2: printf("Tuesday")_ break_
+        default: printf("Other day")_
     }
-    printf("Sum: %d"_ sum)_
     return 0_
 }`,
-        answers: [",", ",", ",", ",", ";", ";", ";", ";", ";", ",", ";", ";"],
+        answers: [";", ";", ";", ";", ";", ";", ";"],
     },
     {
-        id: "T-08",
-        title: "Nested if",
-        difficulty: "hard",
+        id: "T2-11",
+        title: "Print stars",
+        topic: "loops",
+        difficulty: "easy",
         code: `int main()
 {
-    int n = 7_
-    if (n > 0)
+    for (int i = 0_ i < 4_ i++)
     {
-        if (n % 2 == 0)
-        {
-            printf("positive even")_
-        }
-        else
-        {
-            printf("positive odd")_
-        }
+        printf("*")_
     }
     return 0_
 }`,
         answers: [";", ";", ";", ";"],
     },
     {
-        id: "T-09",
-        title: "Matrix init",
-        difficulty: "hard",
-        code: `int main()
-{
-    int m[2][2] = { {1_ 2}_ {3_ 4} }_
-    printf("%d"_ m[0][0])_
-    return 0_
-}`,
-        answers: [",", ",", ",", ";", ",", ";", ";"],
-    },
-    {
-        id: "T-10",
-        title: "Pointer arithmetic",
-        difficulty: "hard",
-        code: `int main()
-{
-    int a[3] = {10_ 20_ 30}_
-    int *p = a_
-    printf("%d"_ *(p + 1))_
-    return 0_
-}`,
-        answers: [",", ",", ";", ";", ",", ";", ";"],
-    },
-    {
-        id: "T-11",
-        title: "Do-while",
-        difficulty: "hard",
-        code: `int main()
-{
-    int i = 0_
-    do
-    {
-        printf("%d "_ i)_
-        i++_
-    } while (i < 3)_
-    return 0_
-}`,
-        answers: [";", ",", ";", ";", ";", ";"],
-    },
-    {
-        id: "T-12",
-        title: "Struct field",
-        difficulty: "hard",
-        code: `struct Point { int x_ int y_ }_
-
-int main()
-{
-    struct Point p = {3_ 4}_
-    printf("%d %d"_ p.x_ p.y)_
-    return 0_
-}`,
-        answers: [";", ";", ";", ",", ";", ",", ",", ";", ";"],
-    },
-    {
-        id: "T-13",
-        title: "Sum of evens",
+        id: "T2-12",
+        title: "Count to 5",
+        topic: "loops",
         difficulty: "medium",
         code: `int main()
 {
-    int sum = 0_
-    for (int i = 2_ i <= 10_ i += 2)
+    int n = 1_
+    while (n <= 5)
     {
-        sum += i_
+        printf("%d "_ n)_
+        n++_
     }
-    printf("%d"_ sum)_
+    return 0_
+}`,
+        answers: [";", ",", ";", ";", ";"],
+    },
+    {
+        id: "T2-13",
+        title: "Total of 1 to 5",
+        topic: "loops",
+        difficulty: "medium",
+        code: `int main()
+{
+    int total = 0_
+    for (int i = 1_ i <= 5_ i++)
+    {
+        total += i_
+    }
+    printf("Total: %d"_ total)_
     return 0_
 }`,
         answers: [";", ";", ";", ";", ",", ";", ";"],
     },
     {
-        id: "T-14",
-        title: "Reverse print",
+        id: "T2-14",
+        title: "Count down by 2",
+        topic: "loops",
         difficulty: "medium",
         code: `int main()
 {
-    for (int i = 5_ i > 0_ i--)
+    for (int i = 10_ i > 0_ i -= 2)
     {
         printf("%d "_ i)_
     }
@@ -566,141 +583,107 @@ int main()
         answers: [";", ";", ",", ";", ";"],
     },
     {
-        id: "T-15",
-        title: "Switch on grade",
-        difficulty: "medium",
+        id: "T2-15",
+        title: "Read until zero",
+        topic: "loops",
+        difficulty: "hard",
         code: `int main()
 {
-    char g = 'B'_
-    switch (g)
+    int n_
+    do
     {
-        case 'A': printf("90+")_ break_
-        case 'B': printf("80+")_ break_
-        default: printf("<80")_
-    }
+        scanf("%d"_ &n)_
+    } while (n != 0)_
     return 0_
 }`,
-        answers: [";", ";", ";", ";", ";", ";", ";"],
+        answers: [";", ",", ";", ";", ";"],
     },
     {
-        id: "T-16",
-        title: "Cube function",
-        difficulty: "medium",
-        code: `int cube(int n)
+        id: "T2-16",
+        title: "Welcome function",
+        topic: "functions",
+        difficulty: "easy",
+        code: `void welcome()
 {
-    return n * n * n_
+    printf("Welcome!")_
 }
 
 int main()
 {
-    printf("%d"_ cube(3))_
+    welcome()_
     return 0_
 }`,
-        answers: [";", ",", ";", ";"],
+        answers: [";", ";", ";"],
     },
     {
-        id: "T-17",
-        title: "Count matches",
-        difficulty: "hard",
-        code: `#include <string.h>
-int main()
+        id: "T2-17",
+        title: "Square a number",
+        topic: "functions",
+        difficulty: "medium",
+        code: `int square(int n)
 {
-    char s[] = "code"_
-    int c = 0_
-    for (int i = 0_ i < strlen(s)_ i++)
-    {
-        if (s[i] == 'o')
-        {
-            c++_
-        }
-    }
-    printf("%d"_ c)_
-    return 0_
-}`,
-        answers: [";", ";", ";", ";", ";", ",", ";", ";"],
-    },
-    {
-        id: "T-18",
-        title: "2D matrix sum",
-        difficulty: "hard",
-        code: `int main()
-{
-    int m[2][2] = { {1_ 2}_ {3_ 4} }_
-    int sum = 0_
-    for (int i = 0_ i < 2_ i++)
-    {
-        for (int j = 0_ j < 2_ j++)
-        {
-            sum += m[i][j]_
-        }
-    }
-    printf("%d"_ sum)_
-    return 0_
-}`,
-        answers: [",", ",", ",", ";", ";", ";", ";", ";", ";", ";", ",", ";", ";"],
-    },
-    {
-        id: "T-19",
-        title: "Function pointer",
-        difficulty: "hard",
-        code: `int add(int a_ int b)
-{
-    return a + b_
+    return n * n_
 }
 
 int main()
 {
-    int (*op)(int_ int) = add_
-    printf("%d"_ op(2_ 3))_
+    int s = square(6)_
+    printf("%d"_ s)_
     return 0_
 }`,
-        answers: [",", ";", ",", ";", ",", ",", ";", ";"],
+        answers: [";", ";", ",", ";", ";"],
     },
     {
-        id: "T-20",
-        title: "Array of structs",
-        difficulty: "hard",
-        code: `struct P { int x_ int y_ }_
+        id: "T2-18",
+        title: "Multiply two numbers",
+        topic: "functions",
+        difficulty: "medium",
+        code: `int multiply(int a_ int b)
+{
+    return a * b_
+}
 
 int main()
 {
-    struct P pts[2] = { {1_ 2}_ {3_ 4} }_
-    printf("%d"_ pts[1].y)_
+    printf("%d"_ multiply(4_ 5))_
     return 0_
 }`,
-        answers: [";", ";", ";", ",", ",", ",", ";", ",", ";", ";"],
+        answers: [",", ";", ",", ",", ";", ";"],
     },
     {
-        id: "T-21",
-        title: "Preprocessor guard",
-        difficulty: "hard",
-        code: `#define DEBUG 1
+        id: "T2-19",
+        title: "Show a number",
+        topic: "functions",
+        difficulty: "easy",
+        code: `void show(int n)
+{
+    printf("Number: %d"_ n)_
+}
+
 int main()
 {
-    int x = 10_
-#if DEBUG
-    printf("x=%d"_ x)_
-#endif
+    show(7)_
     return 0_
 }`,
-        answers: [";", ",", ";", ";"],
+        answers: [",", ";", ";", ";"],
     },
     {
-        id: "T-22",
-        title: "Recursive factorial",
+        id: "T2-20",
+        title: "Is it positive?",
+        topic: "functions",
         difficulty: "hard",
-        code: `int fact(int n)
+        code: `int isPositive(int n)
 {
-    if (n <= 1)
+    if (n > 0)
     {
         return 1_
     }
-    return n * fact(n - 1)_
+    return 0_
 }
 
 int main()
 {
-    printf("%d"_ fact(4))_
+    printf("%d"_ isPositive(-3))_
     return 0_
 }`,
         answers: [";", ";", ",", ";", ";"],
